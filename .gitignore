@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+.vercel
+.playwright-mcp
+.claude
+.codex
+openspec
+gongde-clicker-mobile.png
+.DS_Store
