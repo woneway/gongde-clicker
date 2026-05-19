@@ -66,6 +66,14 @@ function emitStatsChange() {
   window.dispatchEvent(new Event(statsEventName));
 }
 
+function shouldReportAnalytics() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return !window.location.hostname.endsWith("github.io");
+}
+
 function playWoodenFishSound(audioRef) {
   if (typeof window === "undefined") {
     return;
@@ -136,12 +144,14 @@ export function GongdeClicker() {
 
     floaterId.current = id;
     emitStatsChange();
-    track("gongde_click", {
-      source,
-      level: nextLevel.key,
-      level_label: nextLevel.label,
-      total_range: nextLevel.range,
-    });
+    if (shouldReportAnalytics()) {
+      track("gongde_click", {
+        source,
+        level: nextLevel.key,
+        level_label: nextLevel.label,
+        total_range: nextLevel.range,
+      });
+    }
     setCombo(nextCombo);
     setHitState(true);
     setFloaters((items) => [

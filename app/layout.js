@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
           </nav>
         </header>
         {children}
-        <Analytics />
+        {process.env.GITHUB_PAGES !== "1" ? <Analytics /> : null}
       </body>
     </html>
   );
