@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[97367,["/gongde-clicker/_next/static/chunks/035ubwt5l_-qq.js","/gongde-clicker/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
+3:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","main",null,{"className":"info-page","children":["$","section",null,{"className":"info-panel","children":[["$","p",null,{"className":"eyebrow","children":"Contact"}],["$","h1",null,{"children":"联系"}],["$","p",null,{"children":"如果你想反馈梗、提出建议或聊聊合作，可以先联系："}],["$","p",null,{"className":"contact-line","children":[["$","strong",null,{"children":"微信"}],["$","span",null,{"children":"VVE_1001"}]]}],["$","p",null,{"children":["$","a",null,{"className":"mail-link","href":"mailto:woneway.ww@gmail.com","children":"woneway.ww@gmail.com"}]}]]}]}],null,["$","$L2",null,{"children":["$","$3",null,{"name":"Next.MetadataOutlet","children":"$@4"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"mmeDr5ePVLImhErSgj4wb"}
+4:null

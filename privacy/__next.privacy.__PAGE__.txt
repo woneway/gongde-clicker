@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[97367,["/gongde-clicker/_next/static/chunks/035ubwt5l_-qq.js","/gongde-clicker/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
+3:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","main",null,{"className":"info-page","children":["$","section",null,{"className":"info-panel","children":[["$","p",null,{"className":"eyebrow","children":"Privacy"}],["$","h1",null,{"children":"隐私政策"}],["$","p",null,{"children":"功德敲敲不提供账号系统，不需要登录，也不会主动收集你的个人身份信息。"}],["$","p",null,{"children":"网站会使用浏览器 localStorage 保存今日功德、累计功德和最高连击，用于在同一设备上保留你的计数。"}],["$","p",null,{"children":"为了了解页面访问和功能使用情况，网站可能使用匿名统计工具记录页面访问量、点击次数和功能事件。 这些统计用于改进体验，不用于识别具体个人。"}],["$","p",null,{"children":"如果未来接入第三方内容或服务，对方可能会根据其隐私政策使用 Cookie 或类似技术。"}]]}]}],null,["$","$L2",null,{"children":["$","$3",null,{"name":"Next.MetadataOutlet","children":"$@4"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"mmeDr5ePVLImhErSgj4wb"}
+4:null
