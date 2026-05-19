@@ -67,11 +67,7 @@ function emitStatsChange() {
 }
 
 function shouldReportAnalytics() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return !window.location.hostname.endsWith("github.io");
+  return process.env.NEXT_PUBLIC_DISABLE_ANALYTICS !== "1";
 }
 
 function playWoodenFishSound(audioRef) {
