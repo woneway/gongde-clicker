@@ -1,0 +1,8 @@
+{
+  "name": "gongde-clicker",
+  "compatibility_date": "2026-05-20",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page"
+  }
+}
