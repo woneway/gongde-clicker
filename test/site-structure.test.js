@@ -36,3 +36,8 @@ test("home page keeps detailed review copy off the product surface", () => {
   assert.doesNotMatch(clicker, /Privacy/);
   assert.doesNotMatch(clicker, /Note/);
 });
+
+test("root layout includes the AdSense publisher verification script", () => {
+  assert.match(layout, /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js/);
+  assert.match(layout, /client=ca-pub-1739691894917552/);
+});

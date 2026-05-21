@@ -37,6 +37,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN">
+      <head>
+        <script
+          async
+          crossOrigin="anonymous"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1739691894917552"
+        />
+      </head>
       <body>
         <header className="site-header">
           <Link className="brand" href="/">
