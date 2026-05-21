@@ -302,41 +302,6 @@ export function GongdeClicker() {
         <span>今日休息区</span>
         <small>喝口水，继续保持心态稳定。</small>
       </aside>
-
-      <section className="home-content" aria-label="功德敲敲说明">
-        <article>
-          <span>What it is</span>
-          <h2>一个轻量的在线电子木鱼</h2>
-          <p>
-            功德敲敲把点击、声音、震动和计数放在一个简单页面里。
-            它适合工作间隙、学习休息、等待消息或切换状态时使用。
-          </p>
-        </article>
-        <article>
-          <span>How to use</span>
-          <h2>点击木鱼，或按空格键</h2>
-          <p>
-            每次敲击都会增加今日功德和累计功德。连续点击会显示连击，
-            停顿后连击归零，但最高连击会保留在当前浏览器里。
-          </p>
-        </article>
-        <article>
-          <span>Privacy</span>
-          <h2>计数保存在你的浏览器</h2>
-          <p>
-            网站不需要账号。今日功德、累计功德和最高连击使用 localStorage
-            保存在本机，清理浏览器数据后可能会被重置。
-          </p>
-        </article>
-        <article>
-          <span>Note</span>
-          <h2>这是放松工具，不是宗教服务</h2>
-          <p>
-            页面里的功德是一种玩笑式计数，用来制造一点松弛感。
-            它不代表真实修行成果，也不提供宗教建议或精神承诺。
-          </p>
-        </article>
-      </section>
     </main>
   );
 }

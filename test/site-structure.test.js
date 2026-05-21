@@ -7,6 +7,10 @@ const sitemap = readFileSync(
   new URL("../public/sitemap.xml", import.meta.url),
   "utf8",
 );
+const clicker = readFileSync(
+  new URL("../components/gongde-clicker.jsx", import.meta.url),
+  "utf8",
+);
 
 test("site navigation exposes review-friendly informational pages", () => {
   assert.match(layout, /href="\/how-it-works"/);
@@ -24,4 +28,11 @@ test("informational route files exist", () => {
     true,
   );
   assert.equal(existsSync(new URL("../app/faq/page.js", import.meta.url)), true);
+});
+
+test("home page keeps detailed review copy off the product surface", () => {
+  assert.doesNotMatch(clicker, /What it is/);
+  assert.doesNotMatch(clicker, /How to use/);
+  assert.doesNotMatch(clicker, /Privacy/);
+  assert.doesNotMatch(clicker, /Note/);
 });
