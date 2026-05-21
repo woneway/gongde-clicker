@@ -31,6 +31,14 @@ const phrases = [
   "日报自己会写",
 ];
 
+const ritualPrompts = [
+  "敲三下，先把心态放平。",
+  "等构建时敲一敲，别盯进度条。",
+  "开会前先清空一点杂念。",
+  "写完一段代码，给自己补一点功德。",
+  "消息太多时，先敲一下再回复。",
+];
+
 const defaultStats = {
   today: 0,
   total: 0,
@@ -68,6 +76,22 @@ function emitStatsChange() {
 
 function shouldReportAnalytics() {
   return process.env.NEXT_PUBLIC_DISABLE_ANALYTICS !== "1";
+}
+
+function getNextMilestone(total) {
+  if (total < 10) {
+    return 10;
+  }
+
+  if (total < 100) {
+    return 100;
+  }
+
+  if (total < 500) {
+    return 500;
+  }
+
+  return Math.ceil((total + 1) / 500) * 500;
 }
 
 function playWoodenFishSound(audioRef) {
@@ -130,6 +154,15 @@ export function GongdeClicker() {
   }, []);
 
   const gongdeLevel = useMemo(() => getGongdeLevel(stats.total), [stats.total]);
+  const nextMilestone = useMemo(
+    () => getNextMilestone(stats.total),
+    [stats.total],
+  );
+  const progressPercent = Math.min(
+    100,
+    Math.round((stats.total / nextMilestone) * 100),
+  );
+  const ritualPrompt = ritualPrompts[stats.today % ritualPrompts.length];
 
   const strike = useCallback((source = "click") => {
     const nextCombo = combo + 1;
@@ -218,7 +251,10 @@ export function GongdeClicker() {
       </section>
 
       <section className="play-area" aria-label="电子木鱼">
-        <p className="status-pill">{gongdeLevel.label}</p>
+        <div className="status-stack">
+          <p className="status-pill">{gongdeLevel.label}</p>
+          <p className="ritual-prompt">{ritualPrompt}</p>
+        </div>
         <div className="floater-layer" aria-live="polite">
           {floaters.map((item) => (
             <span
@@ -243,12 +279,64 @@ export function GongdeClicker() {
         <div className="combo-line" aria-live="polite">
           {combo > 1 ? `连击 x${combo}` : "点击木鱼或按空格键"}
         </div>
+        <div
+          className="progress-card"
+          aria-label={`距离下一阶段还差 ${Math.max(
+            nextMilestone - stats.total,
+            0,
+          )} 点功德`}
+        >
+          <div className="progress-copy">
+            <span>下一阶段</span>
+            <strong>
+              {stats.total}/{nextMilestone}
+            </strong>
+          </div>
+          <span className="progress-track">
+            <span style={{ width: `${progressPercent}%` }} />
+          </span>
+        </div>
       </section>
 
       <aside className="quiet-space" aria-label="今日休息区">
         <span>今日休息区</span>
         <small>喝口水，继续保持心态稳定。</small>
       </aside>
+
+      <section className="home-content" aria-label="功德敲敲说明">
+        <article>
+          <span>What it is</span>
+          <h2>一个轻量的在线电子木鱼</h2>
+          <p>
+            功德敲敲把点击、声音、震动和计数放在一个简单页面里。
+            它适合工作间隙、学习休息、等待消息或切换状态时使用。
+          </p>
+        </article>
+        <article>
+          <span>How to use</span>
+          <h2>点击木鱼，或按空格键</h2>
+          <p>
+            每次敲击都会增加今日功德和累计功德。连续点击会显示连击，
+            停顿后连击归零，但最高连击会保留在当前浏览器里。
+          </p>
+        </article>
+        <article>
+          <span>Privacy</span>
+          <h2>计数保存在你的浏览器</h2>
+          <p>
+            网站不需要账号。今日功德、累计功德和最高连击使用 localStorage
+            保存在本机，清理浏览器数据后可能会被重置。
+          </p>
+        </article>
+        <article>
+          <span>Note</span>
+          <h2>这是放松工具，不是宗教服务</h2>
+          <p>
+            页面里的功德是一种玩笑式计数，用来制造一点松弛感。
+            它不代表真实修行成果，也不提供宗教建议或精神承诺。
+          </p>
+        </article>
+      </section>
     </main>
   );
 }

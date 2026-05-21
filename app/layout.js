@@ -47,6 +47,8 @@ export default function RootLayout({ children }) {
             </span>
           </Link>
           <nav className="site-nav" aria-label="主导航">
+            <Link href="/how-it-works">玩法</Link>
+            <Link href="/faq">FAQ</Link>
             <Link href="/about">关于</Link>
             <Link href="/privacy">隐私</Link>
             <Link href="/contact">联系</Link>
