@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://woneway.github.io/gongde-clicker/sitemap.xml
+Sitemap: https://gongdeclicker.com/sitemap.xml
