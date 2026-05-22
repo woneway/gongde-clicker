@@ -40,7 +40,9 @@ test("home page keeps detailed review copy off the product surface", () => {
 test("home page focuses on achievement and share-card flow", () => {
   assert.doesNotMatch(clicker, /quiet-space/);
   assert.doesNotMatch(clicker, /今日休息区/);
-  assert.match(clicker, /朋友圈/);
+  assert.doesNotMatch(clicker, /wish-card-panel/);
+  assert.match(clicker, /保存愿望功德图/);
+  assert.match(clicker, /has-feedback/);
   assert.match(clicker, /getAchievementProgress/);
 });
 

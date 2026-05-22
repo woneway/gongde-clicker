@@ -174,11 +174,10 @@ export function GongdeClicker() {
   const [floaters, setFloaters] = useState([]);
   const [progressPulse, setProgressPulse] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
-  const [cardImageUrl, setCardImageUrl] = useState("");
-  const [cardStatus, setCardStatus] = useState("");
   const audioRef = useRef(null);
   const comboTimer = useRef(null);
   const progressTimer = useRef(null);
+  const shareStatusTimer = useRef(null);
   const floaterId = useRef(0);
   const stats = JSON.parse(
     useSyncExternalStore(
@@ -197,6 +196,10 @@ export function GongdeClicker() {
 
       if (progressTimer.current) {
         window.clearTimeout(progressTimer.current);
+      }
+
+      if (shareStatusTimer.current) {
+        window.clearTimeout(shareStatusTimer.current);
       }
     };
   }, []);
@@ -218,26 +221,34 @@ export function GongdeClicker() {
     [stats],
   );
 
+  const showShareStatus = useCallback((message) => {
+    if (shareStatusTimer.current) {
+      window.clearTimeout(shareStatusTimer.current);
+    }
+
+    setShareStatus(message);
+    shareStatusTimer.current = window.setTimeout(() => {
+      setShareStatus("");
+      shareStatusTimer.current = null;
+    }, 1800);
+  }, []);
+
   const copyShareText = useCallback(async () => {
     const text = getWishShareText(stats, dailyFortune, activeWish);
 
     try {
       await navigator.clipboard.writeText(text);
-      setShareStatus("已复制今日功德");
+      showShareStatus("已复制分享文案");
     } catch {
-      setShareStatus("复制失败，请手动分享链接");
+      showShareStatus("复制失败，请手动复制链接");
     }
-
-    window.setTimeout(() => setShareStatus(""), 1800);
-  }, [activeWish, dailyFortune, stats]);
+  }, [activeWish, dailyFortune, showShareStatus, stats]);
 
   const updateWish = useCallback(
     (value) => {
       const normalized = normalizeWish(value);
       saveWish(window.localStorage, stats.date, normalized);
       emitWishChange();
-      setCardImageUrl("");
-      setCardStatus("");
     },
     [stats.date],
   );
@@ -245,17 +256,24 @@ export function GongdeClicker() {
   const rotateWish = useCallback(() => {
     const nextWish = getNextDefaultWish(stats.date, activeWish);
     updateWish(nextWish);
-  }, [activeWish, stats.date, updateWish]);
+    showShareStatus("已换一个愿望");
+  }, [activeWish, showShareStatus, stats.date, updateWish]);
 
   const generateWishCard = useCallback(() => {
     try {
       const dataUrl = renderWishCardToDataUrl(stats, dailyFortune, activeWish);
-      setCardImageUrl(dataUrl);
-      setCardStatus("愿望功德图已生成");
+      const link = document.createElement("a");
+
+      link.download = "gongde-wish-card.png";
+      link.href = dataUrl;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      showShareStatus("图片已生成，已开始保存");
     } catch {
-      setCardStatus("当前浏览器暂不支持生成图片");
+      showShareStatus("当前浏览器暂不支持保存图片");
     }
-  }, [activeWish, dailyFortune, stats]);
+  }, [activeWish, dailyFortune, showShareStatus, stats]);
 
   const strike = useCallback((source = "click") => {
     const nextCombo = combo + 1;
@@ -436,9 +454,12 @@ export function GongdeClicker() {
             onClick={generateWishCard}
             type="button"
           >
-            生成愿望功德图
+            保存愿望功德图
           </button>
-          <small className="share-status" aria-live="polite">
+          <small
+            className={`share-status ${shareStatus ? "has-feedback" : ""}`}
+            aria-live="polite"
+          >
             {shareStatus || "分享给需要一点功德的朋友"}
           </small>
         </article>
@@ -470,31 +491,6 @@ export function GongdeClicker() {
           </div>
         </article>
 
-        {(cardImageUrl || cardStatus) && (
-          <article className="wish-card-panel" aria-live="polite">
-            <div>
-              <span className="section-kicker">愿望功德图</span>
-              <p>{cardStatus || "图片已生成，可以保存后分享。"}</p>
-              <p className="wish-card-tip">
-                长按图片保存，发朋友圈时配上分享文案。
-              </p>
-              <div className="wish-card-actions">
-                <button onClick={copyShareText} type="button">
-                  复制分享文案
-                </button>
-                {cardImageUrl && (
-                  <a download="gongde-wish-card.png" href={cardImageUrl}>
-                    保存图片
-                  </a>
-                )}
-              </div>
-            </div>
-            {cardImageUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img alt="愿望功德图预览" src={cardImageUrl} />
-            )}
-          </article>
-        )}
       </section>
     </main>
   );

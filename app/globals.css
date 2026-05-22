@@ -427,8 +427,7 @@ button {
 }
 
 .fortune-card,
-.achievement-card,
-.wish-card-panel {
+.achievement-card {
   padding: 18px;
   border: 1px solid rgba(232, 215, 189, 0.9);
   border-radius: 8px;
@@ -523,6 +522,14 @@ button {
   cursor: pointer;
 }
 
+.wish-tools button:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.share-button:active {
+  transform: translateY(1px) scale(0.985);
+}
+
 .share-button {
   width: 100%;
   min-height: 42px;
@@ -533,6 +540,10 @@ button {
   font-weight: 900;
   cursor: pointer;
   touch-action: manipulation;
+  transition:
+    filter 120ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .share-button + .share-button {
@@ -555,65 +566,16 @@ button {
   margin-top: 8px;
   color: var(--muted);
   font-size: 13px;
-  text-align: center;
-}
-
-.wish-card-panel {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
-  animation: card-rise 260ms ease-out;
-}
-
-.wish-card-panel p {
-  margin: 0 0 12px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.wish-card-panel .wish-card-tip {
-  color: #51463f;
   font-weight: 800;
+  text-align: center;
+  transition:
+    color 140ms ease,
+    transform 140ms ease;
 }
 
-.wish-card-panel img {
-  width: 168px;
-  aspect-ratio: 4 / 5;
-  border: 1px solid rgba(232, 215, 189, 0.9);
-  border-radius: 8px;
-  background: var(--paper-strong);
-  box-shadow: 0 10px 24px rgba(62, 39, 22, 0.1);
-  animation: image-pop 320ms cubic-bezier(0.24, 0.86, 0.28, 1.18);
-}
-
-.wish-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.wish-card-panel a,
-.wish-card-panel button {
-  min-height: 34px;
-  display: inline-grid;
-  place-items: center;
-  padding: 7px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--rose);
-  color: white;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.wish-card-panel button {
-  background: var(--green);
+.share-status.has-feedback {
+  color: var(--rose);
+  transform: translateY(-1px);
 }
 
 .achievement-heading {
@@ -873,32 +835,6 @@ button {
   }
 }
 
-@keyframes card-rise {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes image-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  72% {
-    opacity: 1;
-    transform: scale(1.025);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -971,16 +907,6 @@ button {
 
   .growth-panel {
     grid-template-columns: 1fr;
-  }
-
-  .wish-card-panel {
-    grid-template-columns: 1fr;
-    justify-items: start;
-  }
-
-  .wish-card-panel img {
-    width: min(72vw, 220px);
-    justify-self: center;
   }
 
   .step-item {

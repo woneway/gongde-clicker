@@ -21,13 +21,11 @@ test("clicker motion uses polished but reducible animation primitives", () => {
   assert.match(css, /\.floater\s*{[^}]*animation:\s*float-up/s);
   assert.match(css, /\.combo-line\.is-combo-hot\s*{[^}]*combo-pop/s);
   assert.match(css, /\.progress-card\.is-pulsing\s+\.progress-track::after/s);
-  assert.match(css, /\.wish-card-panel\s*{[^}]*card-rise/s);
-  assert.match(css, /\.wish-card-panel img\s*{[^}]*image-pop/s);
+  assert.match(css, /\.share-button:active\s*{[^}]*transform/s);
+  assert.match(css, /\.share-status\.has-feedback\s*{[^}]*color:\s*var\(--rose\)/s);
   assert.match(css, /@keyframes fish-hit/);
   assert.match(css, /@keyframes fish-pulse/);
   assert.match(css, /@keyframes combo-pop/);
   assert.match(css, /@keyframes progress-sweep/);
-  assert.match(css, /@keyframes card-rise/);
-  assert.match(css, /@keyframes image-pop/);
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
 });
