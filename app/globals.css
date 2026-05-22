@@ -396,6 +396,133 @@ button {
   font-weight: 900;
 }
 
+.growth-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+  user-select: text;
+}
+
+.fortune-card,
+.achievement-card {
+  padding: 18px;
+  border: 1px solid rgba(232, 215, 189, 0.9);
+  border-radius: 8px;
+  background: rgba(255, 253, 247, 0.84);
+  box-shadow: 0 10px 24px rgba(62, 39, 22, 0.07);
+}
+
+.section-kicker {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.fortune-card h2 {
+  margin: 0 0 8px;
+  color: var(--rose);
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.fortune-card p {
+  margin: 0;
+  color: #51463f;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.fortune-pair {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.share-button {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--green);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.share-button:hover {
+  filter: brightness(1.05);
+}
+
+.share-status {
+  display: block;
+  min-height: 20px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.achievement-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.achievement-heading strong {
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.badge-item {
+  min-height: 96px;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid rgba(117, 105, 95, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.42);
+  color: var(--muted);
+}
+
+.badge-item.is-unlocked {
+  border-color: rgba(39, 116, 91, 0.34);
+  background:
+    linear-gradient(135deg, rgba(39, 116, 91, 0.1), transparent),
+    rgba(255, 255, 255, 0.58);
+  color: var(--ink);
+}
+
+.badge-item span {
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.badge-item strong {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.badge-item small {
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .wooden-fish:focus-visible {
     outline: 4px solid rgba(39, 116, 91, 0.42);
@@ -601,6 +728,10 @@ button {
     padding: 22px;
   }
 
+  .growth-panel {
+    grid-template-columns: 1fr;
+  }
+
   .step-item {
     grid-template-columns: 1fr;
   }
@@ -667,6 +798,10 @@ button {
   .quiet-space small {
     font-size: 12px;
   }
+
+  .badge-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -683,6 +818,12 @@ button {
 
   .quiet-space {
     max-width: 820px;
+    width: 100%;
+    justify-self: center;
+  }
+
+  .growth-panel {
+    max-width: 920px;
     width: 100%;
     justify-self: center;
   }

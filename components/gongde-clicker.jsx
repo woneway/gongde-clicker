@@ -15,6 +15,11 @@ import {
   getInitialStats,
   getTodayKey,
 } from "../lib/gongde-storage";
+import {
+  getAchievements,
+  getDailyFortune,
+  getShareText,
+} from "../lib/gongde-growth";
 
 const phrases = [
   "老板少骂我一次",
@@ -134,6 +139,7 @@ export function GongdeClicker() {
   const [combo, setCombo] = useState(0);
   const [hitState, setHitState] = useState(false);
   const [floaters, setFloaters] = useState([]);
+  const [shareStatus, setShareStatus] = useState("");
   const audioRef = useRef(null);
   const comboTimer = useRef(null);
   const floaterId = useRef(0);
@@ -163,6 +169,22 @@ export function GongdeClicker() {
     Math.round((stats.total / nextMilestone) * 100),
   );
   const ritualPrompt = ritualPrompts[stats.today % ritualPrompts.length];
+  const dailyFortune = useMemo(() => getDailyFortune(stats.date), [stats.date]);
+  const achievements = useMemo(() => getAchievements(stats), [stats]);
+  const unlockedCount = achievements.filter((item) => item.unlocked).length;
+
+  const copyShareText = useCallback(async () => {
+    const text = getShareText(stats, dailyFortune);
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareStatus("已复制今日功德");
+    } catch {
+      setShareStatus("复制失败，请手动分享链接");
+    }
+
+    window.setTimeout(() => setShareStatus(""), 1800);
+  }, [dailyFortune, stats]);
 
   const strike = useCallback((source = "click") => {
     const nextCombo = combo + 1;
@@ -302,6 +324,45 @@ export function GongdeClicker() {
         <span>今日休息区</span>
         <small>喝口水，继续保持心态稳定。</small>
       </aside>
+
+      <section className="growth-panel" aria-label="每日功德签和成就">
+        <article className="fortune-card">
+          <span className="section-kicker">今日功德签</span>
+          <h2>{dailyFortune.title}</h2>
+          <p>{dailyFortune.text}</p>
+          <div className="fortune-pair">
+            <span>宜：{dailyFortune.good}</span>
+            <span>忌：{dailyFortune.avoid}</span>
+          </div>
+          <button className="share-button" onClick={copyShareText} type="button">
+            复制今日功德
+          </button>
+          <small className="share-status" aria-live="polite">
+            {shareStatus || "分享给需要一点功德的朋友"}
+          </small>
+        </article>
+
+        <article className="achievement-card">
+          <div className="achievement-heading">
+            <span className="section-kicker">成就</span>
+            <strong>
+              {unlockedCount}/{achievements.length}
+            </strong>
+          </div>
+          <div className="badge-grid">
+            {achievements.map((item) => (
+              <div
+                className={`badge-item ${item.unlocked ? "is-unlocked" : ""}`}
+                key={item.id}
+              >
+                <span>{item.unlocked ? "已解锁" : "未解锁"}</span>
+                <strong>{item.name}</strong>
+                <small>{item.condition}</small>
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
     </main>
   );
 }
