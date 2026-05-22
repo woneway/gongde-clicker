@@ -43,6 +43,8 @@ test("home page focuses on achievement and share-card flow", () => {
   assert.doesNotMatch(clicker, /wish-card-panel/);
   assert.match(clicker, /保存愿望功德图/);
   assert.match(clicker, /has-feedback/);
+  assert.match(clicker, /manualShareText/);
+  assert.match(clicker, /手动复制文案/);
   assert.match(clicker, /getAchievementProgress/);
 });
 

@@ -174,6 +174,7 @@ export function GongdeClicker() {
   const [floaters, setFloaters] = useState([]);
   const [progressPulse, setProgressPulse] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+  const [manualShareText, setManualShareText] = useState("");
   const audioRef = useRef(null);
   const comboTimer = useRef(null);
   const progressTimer = useRef(null);
@@ -238,9 +239,11 @@ export function GongdeClicker() {
 
     try {
       await navigator.clipboard.writeText(text);
+      setManualShareText("");
       showShareStatus("已复制分享文案");
     } catch {
-      showShareStatus("复制失败，请手动复制链接");
+      setManualShareText(text);
+      showShareStatus("复制失败，请手动复制文案");
     }
   }, [activeWish, dailyFortune, showShareStatus, stats]);
 
@@ -462,6 +465,12 @@ export function GongdeClicker() {
           >
             {shareStatus || "分享给需要一点功德的朋友"}
           </small>
+          {manualShareText && (
+            <label className="manual-share-box">
+              <span>手动复制文案</span>
+              <textarea readOnly value={manualShareText} />
+            </label>
+          )}
         </article>
 
         <article className="achievement-card">

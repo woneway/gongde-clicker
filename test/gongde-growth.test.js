@@ -11,6 +11,7 @@ import {
   getWishShareText,
   normalizeWish,
   saveWish,
+  DEFAULT_WISH_COUNT,
 } from "../lib/gongde-growth.js";
 
 test("getDailyFortune returns the same fortune for the same date", () => {
@@ -109,6 +110,26 @@ test("normalizeWish trims whitespace and limits to 32 visible characters", () =>
 test("getDefaultWish returns a deterministic wish for a date", () => {
   assert.equal(getDefaultWish("2026-05-23"), getDefaultWish("2026-05-23"));
   assert.match(getDefaultWish("2026-05-23"), /^愿/);
+});
+
+test("default wishes cover a broad set of work and internet situations", () => {
+  assert.ok(DEFAULT_WISH_COUNT >= 36);
+
+  const sampledWishes = new Set([getDefaultWish("2026-06-01")]);
+  let currentWish = getDefaultWish("2026-06-01");
+  for (let index = 0; index < DEFAULT_WISH_COUNT + 4; index += 1) {
+    currentWish = getNextDefaultWish("2026-06-01", currentWish);
+    sampledWishes.add(currentWish);
+  }
+
+  const wishes = Array.from(sampledWishes).join(" ");
+  assert.match(wishes, /产品|需求|PRD/);
+  assert.match(wishes, /程序员|代码|Bug|构建|上线/);
+  assert.match(wishes, /设计|稿|审美/);
+  assert.match(wishes, /销售|客户|回款|甲方/);
+  assert.match(wishes, /运营|数据|爆单|流量/);
+  assert.match(wishes, /老师|学生|论文|实验/);
+  assert.match(wishes, /离谱|退退退|上岸|天选/);
 });
 
 test("getNextDefaultWish rotates away from the current default wish", () => {

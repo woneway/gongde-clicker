@@ -578,6 +578,37 @@ button {
   transform: translateY(-1px);
 }
 
+.manual-share-box {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.manual-share-box span {
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.manual-share-box textarea {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid rgba(232, 215, 189, 0.96);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.manual-share-box textarea:focus {
+  border-color: rgba(39, 116, 91, 0.48);
+  outline: 3px solid rgba(39, 116, 91, 0.16);
+}
+
 .achievement-heading {
   display: flex;
   align-items: center;
