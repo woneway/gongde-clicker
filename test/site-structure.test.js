@@ -37,6 +37,13 @@ test("home page keeps detailed review copy off the product surface", () => {
   assert.doesNotMatch(clicker, /Note/);
 });
 
+test("home page focuses on achievement and share-card flow", () => {
+  assert.doesNotMatch(clicker, /quiet-space/);
+  assert.doesNotMatch(clicker, /今日休息区/);
+  assert.match(clicker, /朋友圈/);
+  assert.match(clicker, /getAchievementProgress/);
+});
+
 test("root layout includes the AdSense publisher verification script", () => {
   assert.match(layout, /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js/);
   assert.match(layout, /client=ca-pub-1739691894917552/);

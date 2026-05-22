@@ -14,3 +14,20 @@ test("wooden fish keeps keyboard focus visible without drawing a mobile black bo
   assert.match(css, /\.wooden-fish:focus\s*{[^}]*outline:\s*none/s);
   assert.match(css, /@media\s*\(hover:\s*hover\)\s*and\s*\(pointer:\s*fine\)/);
 });
+
+test("clicker motion uses polished but reducible animation primitives", () => {
+  assert.match(css, /\.wooden-fish\.is-hit\s*{[^}]*fish-hit/s);
+  assert.match(css, /\.wooden-fish\.is-hit::after\s*{[^}]*fish-pulse/s);
+  assert.match(css, /\.floater\s*{[^}]*animation:\s*float-up/s);
+  assert.match(css, /\.combo-line\.is-combo-hot\s*{[^}]*combo-pop/s);
+  assert.match(css, /\.progress-card\.is-pulsing\s+\.progress-track::after/s);
+  assert.match(css, /\.wish-card-panel\s*{[^}]*card-rise/s);
+  assert.match(css, /\.wish-card-panel img\s*{[^}]*image-pop/s);
+  assert.match(css, /@keyframes fish-hit/);
+  assert.match(css, /@keyframes fish-pulse/);
+  assert.match(css, /@keyframes combo-pop/);
+  assert.match(css, /@keyframes progress-sweep/);
+  assert.match(css, /@keyframes card-rise/);
+  assert.match(css, /@keyframes image-pop/);
+  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+});

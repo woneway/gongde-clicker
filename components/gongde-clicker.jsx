@@ -16,10 +16,16 @@ import {
   getTodayKey,
 } from "../lib/gongde-storage";
 import {
+  getActiveWish,
+  getAchievementProgress,
   getAchievements,
   getDailyFortune,
-  getShareText,
+  getNextDefaultWish,
+  getWishShareText,
+  normalizeWish,
+  saveWish,
 } from "../lib/gongde-growth";
+import { renderWishCardToDataUrl } from "../lib/wish-card";
 
 const phrases = [
   "老板少骂我一次",
@@ -52,6 +58,7 @@ const defaultStats = {
 };
 
 const statsEventName = "gongde-clicker:stats-updated";
+const wishEventName = "gongde-clicker:wish-updated";
 
 function subscribeToStats(onStoreChange) {
   if (typeof window === "undefined") {
@@ -77,6 +84,32 @@ function getStatsSnapshot() {
 
 function emitStatsChange() {
   window.dispatchEvent(new Event(statsEventName));
+}
+
+function subscribeToWish(onStoreChange) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  window.addEventListener(wishEventName, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener(wishEventName, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function getWishSnapshot() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return getActiveWish(window.localStorage, getTodayKey());
+}
+
+function emitWishChange() {
+  window.dispatchEvent(new Event(wishEventName));
 }
 
 function shouldReportAnalytics() {
@@ -139,9 +172,13 @@ export function GongdeClicker() {
   const [combo, setCombo] = useState(0);
   const [hitState, setHitState] = useState(false);
   const [floaters, setFloaters] = useState([]);
+  const [progressPulse, setProgressPulse] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+  const [cardImageUrl, setCardImageUrl] = useState("");
+  const [cardStatus, setCardStatus] = useState("");
   const audioRef = useRef(null);
   const comboTimer = useRef(null);
+  const progressTimer = useRef(null);
   const floaterId = useRef(0);
   const stats = JSON.parse(
     useSyncExternalStore(
@@ -150,11 +187,16 @@ export function GongdeClicker() {
       () => JSON.stringify(defaultStats),
     ),
   );
+  const activeWish = useSyncExternalStore(subscribeToWish, getWishSnapshot, () => "");
 
   useEffect(() => {
     return () => {
       if (comboTimer.current) {
         window.clearTimeout(comboTimer.current);
+      }
+
+      if (progressTimer.current) {
+        window.clearTimeout(progressTimer.current);
       }
     };
   }, []);
@@ -171,10 +213,13 @@ export function GongdeClicker() {
   const ritualPrompt = ritualPrompts[stats.today % ritualPrompts.length];
   const dailyFortune = useMemo(() => getDailyFortune(stats.date), [stats.date]);
   const achievements = useMemo(() => getAchievements(stats), [stats]);
-  const unlockedCount = achievements.filter((item) => item.unlocked).length;
+  const achievementProgress = useMemo(
+    () => getAchievementProgress(stats),
+    [stats],
+  );
 
   const copyShareText = useCallback(async () => {
-    const text = getShareText(stats, dailyFortune);
+    const text = getWishShareText(stats, dailyFortune, activeWish);
 
     try {
       await navigator.clipboard.writeText(text);
@@ -184,13 +229,42 @@ export function GongdeClicker() {
     }
 
     window.setTimeout(() => setShareStatus(""), 1800);
-  }, [dailyFortune, stats]);
+  }, [activeWish, dailyFortune, stats]);
+
+  const updateWish = useCallback(
+    (value) => {
+      const normalized = normalizeWish(value);
+      saveWish(window.localStorage, stats.date, normalized);
+      emitWishChange();
+      setCardImageUrl("");
+      setCardStatus("");
+    },
+    [stats.date],
+  );
+
+  const rotateWish = useCallback(() => {
+    const nextWish = getNextDefaultWish(stats.date, activeWish);
+    updateWish(nextWish);
+  }, [activeWish, stats.date, updateWish]);
+
+  const generateWishCard = useCallback(() => {
+    try {
+      const dataUrl = renderWishCardToDataUrl(stats, dailyFortune, activeWish);
+      setCardImageUrl(dataUrl);
+      setCardStatus("愿望功德图已生成");
+    } catch {
+      setCardStatus("当前浏览器暂不支持生成图片");
+    }
+  }, [activeWish, dailyFortune, stats]);
 
   const strike = useCallback((source = "click") => {
     const nextCombo = combo + 1;
     const nextStats = addMerit(window.localStorage, getTodayKey(), nextCombo);
     const nextLevel = getGongdeLevel(nextStats.total);
-    const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+    const phrase =
+      activeWish && Math.random() > 0.45
+        ? `正在加持：${activeWish}`
+        : phrases[Math.floor(Math.random() * phrases.length)];
     const id = floaterId.current + 1;
 
     floaterId.current = id;
@@ -205,6 +279,7 @@ export function GongdeClicker() {
     }
     setCombo(nextCombo);
     setHitState(true);
+    setProgressPulse(true);
     setFloaters((items) => [
       ...items.slice(-6),
       {
@@ -222,6 +297,10 @@ export function GongdeClicker() {
     }
 
     window.setTimeout(() => setHitState(false), 120);
+    if (progressTimer.current) {
+      window.clearTimeout(progressTimer.current);
+    }
+    progressTimer.current = window.setTimeout(() => setProgressPulse(false), 520);
     window.setTimeout(() => {
       setFloaters((items) => items.filter((item) => item.id !== id));
     }, 1100);
@@ -230,7 +309,7 @@ export function GongdeClicker() {
       window.clearTimeout(comboTimer.current);
     }
     comboTimer.current = window.setTimeout(() => setCombo(0), 1400);
-  }, [combo]);
+  }, [activeWish, combo]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -298,11 +377,14 @@ export function GongdeClicker() {
           <span className="fish-mouth" />
           <span className="fish-core">木鱼</span>
         </button>
-        <div className="combo-line" aria-live="polite">
+        <div
+          className={`combo-line ${combo >= 3 ? "is-combo-hot" : ""}`}
+          aria-live="polite"
+        >
           {combo > 1 ? `连击 x${combo}` : "点击木鱼或按空格键"}
         </div>
         <div
-          className="progress-card"
+          className={`progress-card ${progressPulse ? "is-pulsing" : ""}`}
           aria-label={`距离下一阶段还差 ${Math.max(
             nextMilestone - stats.total,
             0,
@@ -320,11 +402,6 @@ export function GongdeClicker() {
         </div>
       </section>
 
-      <aside className="quiet-space" aria-label="今日休息区">
-        <span>今日休息区</span>
-        <small>喝口水，继续保持心态稳定。</small>
-      </aside>
-
       <section className="growth-panel" aria-label="每日功德签和成就">
         <article className="fortune-card">
           <span className="section-kicker">今日功德签</span>
@@ -334,8 +411,32 @@ export function GongdeClicker() {
             <span>宜：{dailyFortune.good}</span>
             <span>忌：{dailyFortune.avoid}</span>
           </div>
+          <div className="wish-box">
+            <label htmlFor="daily-wish">今日愿望</label>
+            <input
+              id="daily-wish"
+              maxLength={40}
+              onChange={(event) => updateWish(event.target.value)}
+              placeholder="愿今天不临时拉会"
+              type="text"
+              value={activeWish}
+            />
+            <div className="wish-tools">
+              <small>愿望仅保存在本机，请勿填写隐私信息。</small>
+              <button onClick={rotateWish} type="button">
+                换一个
+              </button>
+            </div>
+          </div>
           <button className="share-button" onClick={copyShareText} type="button">
-            复制今日功德
+            复制分享文案
+          </button>
+          <button
+            className="share-button share-button-secondary"
+            onClick={generateWishCard}
+            type="button"
+          >
+            生成愿望功德图
           </button>
           <small className="share-status" aria-live="polite">
             {shareStatus || "分享给需要一点功德的朋友"}
@@ -345,9 +446,15 @@ export function GongdeClicker() {
         <article className="achievement-card">
           <div className="achievement-heading">
             <span className="section-kicker">成就</span>
-            <strong>
-              {unlockedCount}/{achievements.length}
-            </strong>
+            <strong>{achievementProgress.summary}</strong>
+          </div>
+          <div className="achievement-progress">
+            <p>{achievementProgress.nextLine}</p>
+            <span>
+              {achievementProgress.nextAchievement
+                ? achievementProgress.nextAchievement.condition
+                : "可以继续敲一张更好看的分享图"}
+            </span>
           </div>
           <div className="badge-grid">
             {achievements.map((item) => (
@@ -362,6 +469,32 @@ export function GongdeClicker() {
             ))}
           </div>
         </article>
+
+        {(cardImageUrl || cardStatus) && (
+          <article className="wish-card-panel" aria-live="polite">
+            <div>
+              <span className="section-kicker">愿望功德图</span>
+              <p>{cardStatus || "图片已生成，可以保存后分享。"}</p>
+              <p className="wish-card-tip">
+                长按图片保存，发朋友圈时配上分享文案。
+              </p>
+              <div className="wish-card-actions">
+                <button onClick={copyShareText} type="button">
+                  复制分享文案
+                </button>
+                {cardImageUrl && (
+                  <a download="gongde-wish-card.png" href={cardImageUrl}>
+                    保存图片
+                  </a>
+                )}
+              </div>
+            </div>
+            {cardImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="愿望功德图预览" src={cardImageUrl} />
+            )}
+          </article>
+        )}
       </section>
     </main>
   );
