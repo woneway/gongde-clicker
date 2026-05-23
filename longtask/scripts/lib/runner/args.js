@@ -13,7 +13,7 @@ function parseArgs(argv) {
     taskDir,
     mode: "execute",
     provider: "codex",
-    contextLimit: 200000,
+    contextLimit: 258000,
     softRatio: 0.5,
     hardRatio: 0.75,
     codexBin: "codex",

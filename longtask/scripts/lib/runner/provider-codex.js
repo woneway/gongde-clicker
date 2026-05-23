@@ -3,14 +3,14 @@ const fs = require("node:fs");
 const { budgetStatus } = require("./budget");
 const { parseJsonlLine, usageEvent } = require("./codex-jsonl");
 
-function buildCodexExecArgs({ cwd, prompt }) {
+function buildCodexExecArgs({ cwd }) {
   return [
     "exec",
     "--json",
     "-C",
     cwd,
     "--dangerously-bypass-approvals-and-sandbox",
-    prompt,
+    "-",
   ];
 }
 
@@ -28,21 +28,24 @@ function runCodex({
   stderrPath,
   onBudget,
   onInterrupt,
+  onEvent,
 }) {
   return new Promise((resolve) => {
     if (stdoutPath) fs.writeFileSync(stdoutPath, "");
     if (stderrPath) fs.writeFileSync(stderrPath, "");
     const child = spawn(
       codexBin,
-      buildCodexExecArgs({ cwd, prompt }),
-      { cwd, stdio: ["ignore", "pipe", "pipe"] }
+      buildCodexExecArgs({ cwd }),
+      { cwd, stdio: ["pipe", "pipe", "pipe"] }
     );
+    if (child.stdin) child.stdin.end(prompt);
 
     let stdout = "";
     let stderr = "";
     let jsonlError = null;
     let lastBudget = null;
     let lastUsage = null;
+    let pendingStdout = "";
     let interrupted = false;
     let interruptReason = null;
     let closed = false;
@@ -72,10 +75,14 @@ function runCodex({
     child.stdout.on("data", (chunk) => {
       stdout += chunk;
       if (stdoutPath) fs.appendFileSync(stdoutPath, chunk);
-      for (const line of chunk.split(/\r?\n/)) {
+      pendingStdout += chunk;
+      const lines = pendingStdout.split(/\r?\n/);
+      pendingStdout = lines.pop() || "";
+      for (const line of lines) {
         if (!line.trim()) continue;
         try {
           const event = parseJsonlLine(line);
+          if (event && onEvent) onEvent(event);
           const usage = usageEvent(event);
           if (usage) {
             lastUsage = usage;
@@ -108,6 +115,25 @@ function runCodex({
     child.on("close", (code, signal) => {
       closed = true;
       for (const timer of timers) clearTimeout(timer);
+      if (pendingStdout.trim()) {
+        try {
+          const event = parseJsonlLine(pendingStdout);
+          if (event && onEvent) onEvent(event);
+          const usage = usageEvent(event);
+          if (usage) {
+            lastUsage = usage;
+            lastBudget = budgetStatus({
+              usedTokens: usage.usedTokens,
+              contextLimit,
+              softRatio,
+              hardRatio,
+            });
+            if (onBudget) onBudget(lastBudget, usage);
+          }
+        } catch (error) {
+          jsonlError = error;
+        }
+      }
       resolve({ ok: code === 0 && !jsonlError, code, signal, stdout, stderr, lastBudget, lastUsage, jsonlError, interrupted, interruptReason });
     });
   });

@@ -40,6 +40,68 @@ function appendRunnerLog(taskDir, lines) {
   fs.appendFileSync(logPath, `${lines.join("\n")}\n`);
 }
 
+function printRunner(message) {
+  process.stderr.write(`[runner] ${message}\n`);
+}
+
+function compact(text, max = 800) {
+  const value = String(text || "").replace(/\s+/g, " ").trim();
+  if (value.length <= max) return value;
+  return `${value.slice(0, max - 3)}...`;
+}
+
+function itemText(item) {
+  if (!item || typeof item !== "object") return "";
+  if (typeof item.text === "string") return item.text;
+  if (typeof item.output === "string") return item.output;
+  if (typeof item.aggregated_output === "string") return item.aggregated_output;
+  if (Array.isArray(item.content)) {
+    return item.content
+      .map((entry) => {
+        if (typeof entry === "string") return entry;
+        if (entry && typeof entry.text === "string") return entry.text;
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+  return "";
+}
+
+function commandText(item) {
+  if (!item || typeof item !== "object") return "";
+  if (Array.isArray(item.command)) return item.command.join(" ");
+  return item.command || item.cmd || item.name || "";
+}
+
+function printCodexEvent(label, event) {
+  const item = event && event.item;
+  if (event && event.type === "thread.started") {
+    printRunner(`session ${label} thread ${event.thread_id || "started"}`);
+    return;
+  }
+  if (event && event.type === "turn.started") {
+    printRunner(`session ${label} turn started`);
+    return;
+  }
+  if (!item || typeof item !== "object") return;
+  if (event.type === "item.started" && item.type === "command_execution") {
+    printRunner(`${label} command start: ${compact(commandText(item), 300) || "command"}`);
+    return;
+  }
+  if (event.type === "item.completed" && item.type === "command_execution") {
+    const status = item.status || item.exit_code || item.exitCode || "completed";
+    printRunner(`${label} command done ${status}: ${compact(commandText(item), 300) || "command"}`);
+    const output = compact(itemText(item), 800);
+    if (output) printRunner(`${label} command output: ${output}`);
+    return;
+  }
+  if (event.type === "item.completed" && item.type === "agent_message") {
+    const text = compact(itemText(item), 800);
+    if (text) printRunner(`${label} agent: ${text}`);
+  }
+}
+
 function nextSessionDir(taskDir, label) {
   const root = path.join(taskDir, "runner-sessions");
   fs.mkdirSync(root, { recursive: true });
@@ -100,12 +162,14 @@ function requireOk(result, label) {
 
 function runNodeLogged({ taskDir, scriptsDir, name, args, label }) {
   const started = Date.now();
+  printRunner(`command ${label || name} start`);
   appendRunnerLog(taskDir, [
     `## Command: ${label || name}`,
     `- Started: ${nowIso()}`,
     `- Command: \`node longtask/scripts/${name} ${args.map((arg) => String(arg)).join(" ")}\``,
   ]);
   const result = runNode(script(scriptsDir, name), args);
+  printRunner(`command ${label || name} ${result.ok ? "pass" : "fail"} ${Date.now() - started}ms`);
   appendRunnerLog(taskDir, [
     `- Finished: ${nowIso()}`,
     `- Duration Ms: ${Date.now() - started}`,
@@ -163,6 +227,8 @@ async function runProviderSession({ options, taskDir, projectRoot, prompt, label
   const summaryPath = path.join(sessionDir, "summary.json");
   const startedAt = Date.now();
   fs.writeFileSync(promptPath, prompt);
+  printRunner(`session ${label} start`);
+  printRunner(`session ${label} files prompt=${rel(taskDir, promptPath)} stdout=${rel(taskDir, stdoutPath)} stderr=${rel(taskDir, stderrPath)}`);
   appendRunnerLog(taskDir, [
     `## Session: ${label}`,
     `- Started: ${nowIso()}`,
@@ -185,14 +251,14 @@ async function runProviderSession({ options, taskDir, projectRoot, prompt, label
     onBudget: (budget) => {
       if (budget.state === "soft_limit") sawSoftLimit = true;
       if (budget.state === "hard_limit") sawHardLimit = true;
-      const line = `[runner] ${label} budget ${budget.state} ${(budget.ratio * 100).toFixed(1)}%`;
-      process.stderr.write(`${line}\n`);
+      printRunner(`${label} budget ${budget.state} ${(budget.ratio * 100).toFixed(1)}% effective=${budget.usedTokens}/${budget.contextLimit}`);
       appendRunnerLog(taskDir, [`- Budget: ${budget.state} ${(budget.ratio * 100).toFixed(1)}%`]);
     },
     onInterrupt: (reason, signal) => {
-      process.stderr.write(`[runner] ${label} interrupt ${reason} -> ${signal}\n`);
+      printRunner(`${label} interrupt ${reason} -> ${signal}`);
       appendRunnerLog(taskDir, [`- Interrupt: ${reason} -> ${signal}`]);
     },
+    onEvent: (event) => printCodexEvent(label, event),
   });
   const durationMs = Date.now() - startedAt;
   const usage = result.lastBudget ? {
@@ -223,10 +289,11 @@ async function runProviderSession({ options, taskDir, projectRoot, prompt, label
     `- Summary: \`${rel(taskDir, summaryPath)}\``,
     "",
   ]);
+  printRunner(`session ${label} ${result.ok ? "complete" : "failed"} ${durationMs}ms summary=${rel(taskDir, summaryPath)}`);
 
   if (!result.ok) {
     writeRunnerFailure(taskDir, options.runnerFailureRel, "codex provider failed", result);
-    process.stderr.write(`[runner] runner failure written ${options.runnerFailureRel}\n`);
+    printRunner(`runner failure written ${options.runnerFailureRel}`);
     process.stderr.write(result.stderr || "codex provider failed\n");
     if (result.jsonlError) process.stderr.write(`${result.jsonlError.message}\n`);
     process.exit(1);
@@ -237,8 +304,8 @@ async function runProviderSession({ options, taskDir, projectRoot, prompt, label
     const handoff = path.join(taskDir, "handoff.md");
     if (!fs.existsSync(handoff)) {
       writeRunnerFailure(taskDir, options.runnerFailureRel, "handoff missing after context limit or interrupt", result);
-      process.stderr.write(`[runner] runner failure written ${options.runnerFailureRel}\n`);
-      process.stderr.write("[runner] context limit reached but handoff.md was not written\n");
+      printRunner(`runner failure written ${options.runnerFailureRel}`);
+      printRunner("context limit reached but handoff.md was not written");
       process.exit(1);
     }
   }
@@ -257,6 +324,7 @@ function templateText(scriptsDir, name) {
 
 async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
   const stateScript = script(scriptsDir, "longtask-state.js");
+  printRunner(`start mode=prepare task=${taskDir} project=${projectRoot} context_limit=${options.contextLimit}`);
   appendRunnerLog(taskDir, [
     `## Runner Start`,
     `- Started: ${nowIso()}`,
@@ -267,13 +335,16 @@ async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
     "",
   ]);
   normalizePrepareState(taskDir);
+  printRunner("state normalize prepare artifact index");
   appendRunnerLog(taskDir, ["## State Operation", "- Operation: normalize prepare artifact index", ""]);
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-intake.js", args: [path.join(taskDir, "intake.md")], label: "lint intake" }), "lint-intake");
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-phase-check.js", args: [path.join(taskDir, "phase-checks/intake-check-01.md")], label: "lint intake phase check" }), "lint intake phase check");
   requireOk(runNode(stateScript, [taskDir, "register-phase-check", "phase-checks/intake-check-01.md"]), "register intake phase check");
+  printRunner("state register phase-checks/intake-check-01.md");
   appendRunnerLog(taskDir, ["## State Operation", "- Operation: register intake phase check", ""]);
   if (readState(taskDir).phase === "intake") {
     requireOk(runNode(stateScript, [taskDir, "advance", "plan"]), "advance plan");
+    printRunner("state advance plan");
     appendRunnerLog(taskDir, ["## State Operation", "- Operation: advance plan", ""]);
   }
 
@@ -314,6 +385,7 @@ async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
       return;
     }
   } else {
+    printRunner("session prepare-plan-generator skipped: plan.md already filled");
     appendRunnerLog(taskDir, ["## Session Skipped", "- Label: prepare-plan-generator", "- Reason: plan.md already exists and looks filled", ""]);
   }
 
@@ -341,13 +413,16 @@ async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
       return;
     }
   } else {
+    printRunner("session plan-critic skipped: plan phase check already exists");
     appendRunnerLog(taskDir, ["## Session Skipped", "- Label: plan-critic", "- Reason: plan phase check already exists", ""]);
   }
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-phase-check.js", args: [path.join(taskDir, "phase-checks/plan-check-01.md")], label: "lint plan phase check" }), "lint plan phase check");
   requireOk(runNode(stateScript, [taskDir, "register-phase-check", "phase-checks/plan-check-01.md"]), "register plan phase check");
+  printRunner("state register phase-checks/plan-check-01.md");
   appendRunnerLog(taskDir, ["## State Operation", "- Operation: register plan phase check", ""]);
   if (readState(taskDir).phase === "plan") {
     requireOk(runNode(stateScript, [taskDir, "advance", "contract"]), "advance contract");
+    printRunner("state advance contract");
     appendRunnerLog(taskDir, ["## State Operation", "- Operation: advance contract", ""]);
   }
 
@@ -372,6 +447,7 @@ async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
       return;
     }
   } else {
+    printRunner("session prepare-contract-generator skipped: contract already filled");
     appendRunnerLog(taskDir, ["## Session Skipped", "- Label: prepare-contract-generator", "- Reason: contract already exists and looks filled", ""]);
   }
 
@@ -398,17 +474,20 @@ async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
       return;
     }
   } else {
+    printRunner("session contract-critic skipped: contract phase check already exists");
     appendRunnerLog(taskDir, ["## Session Skipped", "- Label: contract-critic", "- Reason: contract phase check already exists", ""]);
   }
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-phase-check.js", args: [path.join(taskDir, "phase-checks/contract-check-01.md")], label: "lint contract phase check" }), "lint contract phase check");
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-contract.js", args: [path.join(taskDir, "contracts/sprint-01.md")], label: "lint contract" }), "lint-contract");
   requireOk(runNode(stateScript, [taskDir, "register-phase-check", "phase-checks/contract-check-01.md"]), "register contract phase check");
+  printRunner("state register phase-checks/contract-check-01.md");
   appendRunnerLog(taskDir, ["## State Operation", "- Operation: register contract phase check", ""]);
 
   process.stdout.write("[runner] prepare complete; review plan.md and contracts/sprint-01.md before execute\n");
 }
 
 async function runExecute({ options, taskDir, projectRoot, scriptsDir }) {
+  printRunner(`start mode=execute task=${taskDir} project=${projectRoot} context_limit=${options.contextLimit}`);
   appendRunnerLog(taskDir, [
     `## Runner Start`,
     `- Started: ${nowIso()}`,
@@ -438,6 +517,7 @@ async function runExecute({ options, taskDir, projectRoot, scriptsDir }) {
     );
     requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-human-brief.js", args: [path.join(taskDir, "human-brief.md")], label: "lint human brief" }), "lint human brief");
     requireOk(runNode(stateScript, [taskDir, "set-human-brief", "human-brief.md"]), "set human brief");
+    printRunner("state set human-brief.md");
     appendRunnerLog(taskDir, ["## State Operation", "- Operation: set human brief", ""]);
     process.stdout.write(`[runner] max repair attempts ${options.maxRepairAttempts} reached; routed to human_brief\n`);
     return;
@@ -445,10 +525,12 @@ async function runExecute({ options, taskDir, projectRoot, scriptsDir }) {
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "check-execution-ready.js", args: [taskDir], label: "check execution ready" }), "check-execution-ready");
   if (readState(taskDir).phase === "contract") {
     requireOk(runNode(stateScript, [taskDir, "advance", "execute"]), "advance execute");
+    printRunner("state advance execute");
     appendRunnerLog(taskDir, ["## State Operation", "- Operation: advance execute", ""]);
   }
   if (readState(taskDir).attempt_status !== "active") {
     requireOk(runNode(stateScript, [taskDir, "start-attempt"]), "start attempt");
+    printRunner("state start attempt");
     appendRunnerLog(taskDir, ["## State Operation", "- Operation: start attempt", ""]);
   }
 
@@ -469,6 +551,7 @@ async function runExecute({ options, taskDir, projectRoot, scriptsDir }) {
 
   if (readState(taskDir).attempt_status === "active") {
     requireOk(runNode(stateScript, [taskDir, "complete-attempt"]), "complete attempt");
+    printRunner("state complete attempt");
     appendRunnerLog(taskDir, ["## State Operation", "- Operation: complete attempt", ""]);
   }
   const state = readState(taskDir);
@@ -478,15 +561,18 @@ async function runExecute({ options, taskDir, projectRoot, scriptsDir }) {
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-execution-log.js", args: [path.join(taskDir, "execution-log.md")], label: "lint execution log" }), "lint-execution-log");
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-phase-check.js", args: [path.join(taskDir, latestExecuteCheckRel)], label: "lint execute phase check" }), "lint execute phase check");
   requireOk(runNode(stateScript, [taskDir, "register-phase-check", latestExecuteCheckRel]), "register execute phase check");
+  printRunner(`state register ${latestExecuteCheckRel}`);
   appendRunnerLog(taskDir, ["## State Operation", `- Operation: register execute phase check ${latestExecuteCheckRel}`, ""]);
   if (readState(taskDir).phase === "execute") {
     requireOk(runNode(stateScript, [taskDir, "advance", "review"]), "advance review");
+    printRunner("state advance review");
     appendRunnerLog(taskDir, ["## State Operation", "- Operation: advance review", ""]);
   }
 
   const reviewPath = path.join(taskDir, latestReviewRel);
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-review.js", args: [reviewPath], label: "lint review" }), "lint-review");
   requireOk(runNode(stateScript, [taskDir, "register-review", latestReviewRel]), "register review");
+  printRunner(`state register ${latestReviewRel}`);
   appendRunnerLog(taskDir, ["## State Operation", `- Operation: register review ${latestReviewRel}`, ""]);
   const review = fs.readFileSync(reviewPath, "utf8");
   const verdict = field(review, "Verdict");
@@ -496,6 +582,7 @@ async function runExecute({ options, taskDir, projectRoot, scriptsDir }) {
   if (verdict === "pass" && failType === "none" && classification === "none") next = "done";
   else if (verdict === "fail" && failType === "auto" && ["implementation-bug", "build-type-failure"].includes(classification)) next = "repair";
   requireOk(runNode(stateScript, [taskDir, "advance", next]), `advance ${next}`);
+  printRunner(`state advance ${next}`);
   appendRunnerLog(taskDir, ["## State Operation", `- Operation: advance ${next}`, ""]);
   process.stdout.write(`[runner] execute complete; state advanced to ${next}\n`);
 }
