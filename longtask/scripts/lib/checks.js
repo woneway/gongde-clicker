@@ -50,7 +50,7 @@ function hasConcreteSection(text, heading) {
 }
 
 function hasEvidencePointer(text) {
-  return /evidence\/attempt-\d+\/|`[^`]*(npm|node|pytest|uv|curl|test|bash|pnpm|yarn)[^`]*`|\.png\b|\.txt\b|stdout|stderr|exit\s+\d/i.test(text);
+  return /evidence\/attempt-\d+\/|`[^`]*(npm|node|pytest|uv|curl|test|bash|pnpm|yarn)[^`]*`|`[^`]+\.(md|js|jsx|ts|tsx|json|xml|yaml|yml|css|html|txt|png)`|\.png\b|\.txt\b|stdout|stderr|exit\s+\d/i.test(text);
 }
 
 function hasVerifyBy(text) {

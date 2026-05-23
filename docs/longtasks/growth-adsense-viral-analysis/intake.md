@@ -3,7 +3,7 @@
 > 语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
 
 ## Requirement
-用户需要了解当前 Gongde Clicker 项目是否已经具备推广基础，并评估通过 Google AdSense 获利前，产品本身能否引发用户主动使用、复访和病毒式传播。当前阶段先做 intake 和事实基线，不直接进入改版实现。
+用户需要了解当前 Gongde Clicker 项目是否已经具备推广基础，并评估通过 Google AdSense 获利前，产品本身能否引发用户主动使用、复访和病毒式传播；后续需要据此制定推广、增长闭环、产品改进和 AdSense 风险控制计划。
 
 ## Context
 - 项目是 Next.js App Router 站点，入口为 `app/page.js`，核心产品组件为 `components/gongde-clicker.jsx`。
@@ -23,7 +23,6 @@
 - 当前不评估真实线上流量、广告收入和转化率，因为本地仓库没有 Search Console、AdSense、Analytics 报表或社媒投放数据。
 
 ## Non-Goals
-- 本阶段不实现新功能、不修改 UI、不新增广告位、不改 AdSense 脚本。
 - 不预测具体 AdSense RPM、点击率、收入或审核通过概率的精确数值。
 - 不设计付费投放预算、素材矩阵或渠道日历。
 - 不引入账号、排行榜、后端、公开 UGC、评论区或社交 OAuth。

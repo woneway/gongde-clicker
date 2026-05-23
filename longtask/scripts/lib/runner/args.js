@@ -23,6 +23,8 @@ function parseArgs(argv) {
     hardKillMs: 5000,
     runnerFailureRel: "runner-failure.md",
     maxRepairAttempts: 5,
+    maxPlanRevisions: 3,
+    maxContractRevisions: 3,
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -44,6 +46,8 @@ function parseArgs(argv) {
     else if (flag === "--hard-kill-ms") parsed.hardKillMs = numberFlag(flag, value);
     else if (flag === "--runner-failure") parsed.runnerFailureRel = value;
     else if (flag === "--max-repair-attempts") parsed.maxRepairAttempts = numberFlag(flag, value);
+    else if (flag === "--max-plan-revisions") parsed.maxPlanRevisions = numberFlag(flag, value);
+    else if (flag === "--max-contract-revisions") parsed.maxContractRevisions = numberFlag(flag, value);
     else throw new Error(`unknown flag ${flag}`);
   }
 

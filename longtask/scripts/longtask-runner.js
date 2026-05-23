@@ -93,7 +93,8 @@ function printCodexEvent(label, event) {
     const status = item.status || item.exit_code || item.exitCode || "completed";
     printRunner(`${label} command done ${status}: ${compact(commandText(item), 300) || "command"}`);
     const output = compact(itemText(item), 800);
-    if (output) printRunner(`${label} command output: ${output}`);
+    const failed = status === "failed" || item.exit_code || item.exitCode;
+    if (failed && output) printRunner(`${label} command output: ${output}`);
     return;
   }
   if (event.type === "item.completed" && item.type === "agent_message") {
@@ -154,9 +155,38 @@ function field(text, name) {
   return match ? match[1].trim() : "";
 }
 
+function fieldBlock(text, name) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = text.match(new RegExp(`^- \\*\\*${escaped}\\*\\*:[ \\t]*(.*)$`, "m"));
+  if (!match) return "";
+  const start = match.index + match[0].length;
+  const next = text.slice(start).match(/\n- \*\*[^*]+\*\*:/);
+  return [match[1].trim(), (next ? text.slice(start, start + next.index) : text.slice(start)).trim()].filter(Boolean).join("\n");
+}
+
 function artifactVerdict(file) {
   if (!fs.existsSync(file)) return "";
   return field(fs.readFileSync(file, "utf8"), "Verdict");
+}
+
+function numberedPhaseCheckRel(phase, number) {
+  return `phase-checks/${phase}-check-${String(number).padStart(2, "0")}.md`;
+}
+
+function nextPhaseCheckNumber(taskDir, phase) {
+  let number = 1;
+  while (fs.existsSync(path.join(taskDir, numberedPhaseCheckRel(phase, number)))) number += 1;
+  return number;
+}
+
+function updateContractPhaseCheck(taskDir, phaseCheckRel) {
+  const contractPath = path.join(taskDir, "contracts/sprint-01.md");
+  if (!fs.existsSync(contractPath)) return;
+  const text = fs.readFileSync(contractPath, "utf8");
+  const next = text.match(/^- \*\*Phase Check\*\*:/m)
+    ? text.replace(/^- \*\*Phase Check\*\*:.*$/m, `- **Phase Check**: ${phaseCheckRel}`)
+    : `${text.trimEnd()}\n- **Phase Check**: ${phaseCheckRel}\n`;
+  if (next !== text) fs.writeFileSync(contractPath, next);
 }
 
 function requireOk(result, label) {
@@ -240,9 +270,15 @@ function formatMs(ms) {
 }
 
 function purposeForLabel(label) {
+  if (/^plan-critic-\d+/.test(label)) return "评审 `plan.md`，并写入对应 plan phase check。";
+  if (/^plan-reviser-\d+/.test(label)) return "根据 plan critic 的修订要求更新 `plan.md`。";
+  if (/^plan-reviser-from-contract-\d+/.test(label)) return "根据 contract critic 发现的上游问题更新 `plan.md`。";
+  if (/^contract-critic-\d+/.test(label)) return "评审 sprint contract，并写入对应 contract phase check。";
+  if (/^contract-reviser-\d+/.test(label)) return "根据 contract critic 的修订要求更新 sprint contract。";
   return {
     "prepare-plan-generator": "基于 intake 生成或修订 `plan.md`。",
     "plan-critic": "评审 `plan.md`，并写入 `phase-checks/plan-check-01.md`。",
+    "plan-reviser": "根据 plan critic 的修订要求更新 `plan.md`。",
     "prepare-contract-generator": "基于 intake 和 plan 生成 `contracts/sprint-01.md`。",
     "contract-critic": "评审 sprint contract，并写入 `phase-checks/contract-check-01.md`。",
     "execute-attempt": "执行当前 sprint attempt，并产出 evidence/review 产物。",
@@ -437,6 +473,218 @@ function templateText(scriptsDir, name) {
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
 }
 
+async function runPlanCriticLoop({ options, taskDir, projectRoot, scriptsDir, stateScript, startNumber = 1 }) {
+  let latestPlanCheckRel = null;
+  const endNumber = startNumber + options.maxPlanRevisions;
+  for (let checkNumber = startNumber; checkNumber <= endNumber; checkNumber += 1) {
+    latestPlanCheckRel = numberedPhaseCheckRel("plan", checkNumber);
+    const planCheckPath = path.join(taskDir, latestPlanCheckRel);
+    if (!artifactLooksFilled(planCheckPath, [/- \*\*Phase\*\*: plan/m, /- \*\*Verdict\*\*: pass|revise|escalate/m])) {
+      const planCritic = await runProviderSession({
+        options,
+        taskDir,
+        projectRoot,
+        label: `plan-critic-${String(checkNumber).padStart(2, "0")}`,
+        requireHandoffOnDrain: false,
+        prompt: [
+          "RUNNER_PLAN_CRITIC",
+          "语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。",
+          "你是独立的 plan critic subagent。",
+          `任务目录：${taskDir}`,
+          `请直接读取：${path.join(taskDir, "intake.md")}`,
+          `请直接读取：${path.join(taskDir, "plan.md")}`,
+          `phase check 模板：${path.join(projectRoot, "longtask/templates/phase-check.md")}`,
+          "除此之外，只读取 plan file map 明确命名的源码指针。不要使用 generator 或 reviser 聊天历史。",
+          "在 Context Boundary 字段中包含这个 lint 可识别短语：without generator or executor chat history。",
+          `写入 ${planCheckPath}，Verdict 必须是 pass、revise 或 escalate。`,
+          "",
+          templateText(scriptsDir, "plan-critic-prompt.md"),
+        ].join("\n"),
+      });
+      if (planCritic.sawHardLimit) {
+        writeRunnerPaused(taskDir, "plan-critic 在 session 完成后达到 hard context budget", planCritic);
+        process.stdout.write("[runner] prepare 已在 plan critic 后暂停；重新运行同一命令可继续\n");
+        return false;
+      }
+    } else {
+      printRunner(`session plan-critic-${String(checkNumber).padStart(2, "0")} skipped: ${latestPlanCheckRel} already exists`);
+      appendRunnerLog(taskDir, ["## Session Skipped", `- Label: plan-critic-${String(checkNumber).padStart(2, "0")}`, `- Reason: ${latestPlanCheckRel} already exists`, ""]);
+    }
+    requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-phase-check.js", args: [planCheckPath], label: `lint ${latestPlanCheckRel}` }), `lint ${latestPlanCheckRel}`);
+    requireOk(runNode(stateScript, [taskDir, "register-phase-check", latestPlanCheckRel]), `register ${latestPlanCheckRel}`);
+    printRunner(`state register ${latestPlanCheckRel}`);
+    appendRunnerLog(taskDir, ["## State Operation", `- Operation: register ${latestPlanCheckRel}`, ""]);
+
+    const verdict = artifactVerdict(planCheckPath) || "unknown";
+    if (verdict === "pass") return true;
+    if (verdict === "escalate") {
+      printRunner(`prepare stopped: ${latestPlanCheckRel} verdict is escalate`);
+      appendRunnerLog(taskDir, ["## Runner Stop", `- Reason: ${latestPlanCheckRel} verdict is escalate`, "- Next: human decision required by phase check.", ""]);
+      return false;
+    }
+    if (checkNumber >= endNumber) {
+      printRunner(`prepare stopped: plan revise loop reached max ${options.maxPlanRevisions}`);
+      appendRunnerLog(taskDir, ["## Runner Stop", `- Reason: plan revise loop reached max ${options.maxPlanRevisions}`, `- Last Check: ${latestPlanCheckRel}`, ""]);
+      return false;
+    }
+
+    const reviser = await runProviderSession({
+      options,
+      taskDir,
+      projectRoot,
+      label: `plan-reviser-${String(checkNumber).padStart(2, "0")}`,
+      requireHandoffOnDrain: false,
+      prompt: [
+        "RUNNER_PLAN_REVISE",
+        "语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。",
+        "你是 plan reviser subagent。",
+        `任务目录：${taskDir}`,
+        `请直接读取：${path.join(taskDir, "intake.md")}`,
+        `请直接读取：${path.join(taskDir, "plan.md")}`,
+        `请直接读取：${planCheckPath}`,
+        "只根据 phase check 的 Required Revisions 和 Findings 修订 plan.md。",
+        "只写入 plan.md；不要写入 phase-checks、contracts、execution-log 或业务源码。",
+        "不要使用 critic/generator 聊天历史，不要扫描整个仓库。",
+        "修订后确保 `node longtask/scripts/lint-plan.js docs/longtasks/<task-id>/plan.md` 能通过。",
+      ].join("\n"),
+    });
+    if (reviser.sawHardLimit) {
+      writeRunnerPaused(taskDir, "plan-reviser 在 session 完成后达到 hard context budget", reviser);
+      process.stdout.write("[runner] prepare 已在 plan reviser 后暂停；重新运行同一命令可继续\n");
+      return false;
+    }
+    requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-plan.js", args: [path.join(taskDir, "plan.md")], label: `lint plan after ${latestPlanCheckRel}` }), "lint revised plan");
+  }
+  return false;
+}
+
+async function runContractCriticLoop({ options, taskDir, projectRoot, scriptsDir, stateScript, startNumber = 1 }) {
+  let latestContractCheckRel = null;
+  const endNumber = startNumber + options.maxContractRevisions;
+  for (let checkNumber = startNumber; checkNumber <= endNumber; checkNumber += 1) {
+    latestContractCheckRel = numberedPhaseCheckRel("contract", checkNumber);
+    const contractCheckPath = path.join(taskDir, latestContractCheckRel);
+    if (!artifactLooksFilled(contractCheckPath, [/- \*\*Phase\*\*: contract/m, /- \*\*Verdict\*\*: pass|revise|escalate/m])) {
+      const contractCritic = await runProviderSession({
+        options,
+        taskDir,
+        projectRoot,
+        label: `contract-critic-${String(checkNumber).padStart(2, "0")}`,
+        requireHandoffOnDrain: false,
+        prompt: [
+          "RUNNER_CONTRACT_CRITIC",
+          "语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。",
+          "你是独立的 contract critic subagent。",
+          `任务目录：${taskDir}`,
+          `请直接读取：${path.join(taskDir, "intake.md")}`,
+          `请直接读取：${path.join(taskDir, "plan.md")}`,
+          `请直接读取：${path.join(taskDir, "contracts/sprint-01.md")}`,
+          `phase check 模板：${path.join(projectRoot, "longtask/templates/phase-check.md")}`,
+          "除此之外，只读取 contract context map 明确命名的源码指针。不要使用 generator 或 reviser 聊天历史。",
+          "在 Context Boundary 字段中包含这个 lint 可识别短语：without generator or executor chat history。",
+          "如果 contract 本身需要修订，Required Revisions 必须以 `CONTRACT_REVISION_REQUIRED:` 开头。",
+          "如果必须先修订上游 plan，Required Revisions 必须以 `PLAN_REVISION_REQUIRED:` 开头。",
+          "如果缺失信息无法从 intake、plan、contract 或明确源码指针自行解决，Verdict 必须是 escalate。",
+          `写入 ${contractCheckPath}，Verdict 必须是 pass、revise 或 escalate。`,
+          "",
+          templateText(scriptsDir, "contract-critic-prompt.md"),
+        ].join("\n"),
+      });
+      if (contractCritic.sawHardLimit) {
+        writeRunnerPaused(taskDir, "contract-critic 在 session 完成后达到 hard context budget", contractCritic);
+        process.stdout.write("[runner] prepare 已在 contract critic 后暂停；重新运行同一命令可继续\n");
+        return false;
+      }
+    } else {
+      printRunner(`session contract-critic-${String(checkNumber).padStart(2, "0")} skipped: ${latestContractCheckRel} already exists`);
+      appendRunnerLog(taskDir, ["## Session Skipped", `- Label: contract-critic-${String(checkNumber).padStart(2, "0")}`, `- Reason: ${latestContractCheckRel} already exists`, ""]);
+    }
+
+    requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-phase-check.js", args: [contractCheckPath], label: `lint ${latestContractCheckRel}` }), `lint ${latestContractCheckRel}`);
+    requireOk(runNode(stateScript, [taskDir, "register-phase-check", latestContractCheckRel]), `register ${latestContractCheckRel}`);
+    printRunner(`state register ${latestContractCheckRel}`);
+    appendRunnerLog(taskDir, ["## State Operation", `- Operation: register ${latestContractCheckRel}`, ""]);
+
+    const verdict = artifactVerdict(contractCheckPath) || "unknown";
+    if (verdict === "pass") {
+      updateContractPhaseCheck(taskDir, latestContractCheckRel);
+      requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-contract.js", args: [path.join(taskDir, "contracts/sprint-01.md")], label: `lint contract after ${latestContractCheckRel}` }), "lint-contract");
+      return true;
+    }
+    if (verdict === "escalate") {
+      printRunner(`prepare stopped: ${latestContractCheckRel} verdict is escalate`);
+      appendRunnerLog(taskDir, ["## Runner Stop", `- Reason: ${latestContractCheckRel} verdict is escalate`, "- Next: human decision required by phase check.", ""]);
+      return false;
+    }
+    if (checkNumber >= endNumber) {
+      printRunner(`prepare stopped: contract revise loop reached max ${options.maxContractRevisions}`);
+      appendRunnerLog(taskDir, ["## Runner Stop", `- Reason: contract revise loop reached max ${options.maxContractRevisions}`, `- Last Check: ${latestContractCheckRel}`, ""]);
+      return false;
+    }
+
+    const requiredRevisions = fieldBlock(fs.readFileSync(contractCheckPath, "utf8"), "Required Revisions");
+    if (/PLAN_REVISION_REQUIRED/i.test(requiredRevisions)) {
+      const planReviser = await runProviderSession({
+        options,
+        taskDir,
+        projectRoot,
+        label: `plan-reviser-from-contract-${String(checkNumber).padStart(2, "0")}`,
+        requireHandoffOnDrain: false,
+        prompt: [
+          "RUNNER_PLAN_REVISE_FROM_CONTRACT",
+          "语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。",
+          "你是 plan reviser subagent。",
+          `任务目录：${taskDir}`,
+          `请直接读取：${path.join(taskDir, "intake.md")}`,
+          `请直接读取：${path.join(taskDir, "plan.md")}`,
+          `请直接读取：${path.join(taskDir, "contracts/sprint-01.md")}`,
+          `请直接读取：${contractCheckPath}`,
+          "只根据 contract phase check 中 PLAN_REVISION_REQUIRED 的 Required Revisions 和 Findings 修订 plan.md。",
+          "只写入 plan.md；不要写入 phase-checks、contracts、execution-log 或业务源码。",
+          "修订后确保 `node longtask/scripts/lint-plan.js docs/longtasks/<task-id>/plan.md` 能通过。",
+        ].join("\n"),
+      });
+      if (planReviser.sawHardLimit) {
+        writeRunnerPaused(taskDir, "plan-reviser-from-contract 在 session 完成后达到 hard context budget", planReviser);
+        process.stdout.write("[runner] prepare 已在 plan reviser 后暂停；重新运行同一命令可继续\n");
+        return false;
+      }
+      requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-plan.js", args: [path.join(taskDir, "plan.md")], label: `lint plan after ${latestContractCheckRel}` }), "lint revised plan");
+      const planStartNumber = nextPhaseCheckNumber(taskDir, "plan");
+      const planCheckPassed = await runPlanCriticLoop({ options, taskDir, projectRoot, scriptsDir, stateScript, startNumber: planStartNumber });
+      if (!planCheckPassed) return false;
+    } else {
+      const contractReviser = await runProviderSession({
+        options,
+        taskDir,
+        projectRoot,
+        label: `contract-reviser-${String(checkNumber).padStart(2, "0")}`,
+        requireHandoffOnDrain: false,
+        prompt: [
+          "RUNNER_CONTRACT_REVISE",
+          "语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。",
+          "你是 contract reviser subagent。",
+          `任务目录：${taskDir}`,
+          `请直接读取：${path.join(taskDir, "intake.md")}`,
+          `请直接读取：${path.join(taskDir, "plan.md")}`,
+          `请直接读取：${path.join(taskDir, "contracts/sprint-01.md")}`,
+          `请直接读取：${contractCheckPath}`,
+          "只根据 contract phase check 中 CONTRACT_REVISION_REQUIRED 的 Required Revisions 和 Findings 修订 contracts/sprint-01.md。",
+          "只写入 contracts/sprint-01.md；不要写入 phase-checks、plan.md、execution-log 或业务源码。",
+          "保持 contract Status 为 proposed。",
+          "修订后确保 `node longtask/scripts/lint-contract.js docs/longtasks/<task-id>/contracts/sprint-01.md` 能通过。",
+        ].join("\n"),
+      });
+      if (contractReviser.sawHardLimit) {
+        writeRunnerPaused(taskDir, "contract-reviser 在 session 完成后达到 hard context budget", contractReviser);
+        process.stdout.write("[runner] prepare 已在 contract reviser 后暂停；重新运行同一命令可继续\n");
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
 async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
   const stateScript = script(scriptsDir, "longtask-state.js");
   printRunner(`start mode=prepare task=${taskDir} project=${projectRoot} context_limit=${options.contextLimit}`);
@@ -506,51 +754,11 @@ async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
   }
 
   requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-plan.js", args: [path.join(taskDir, "plan.md")], label: "lint plan" }), "lint-plan");
-  const planCheckPath = path.join(taskDir, "phase-checks/plan-check-01.md");
-  if (!artifactLooksFilled(planCheckPath, [/- \*\*Phase\*\*: plan/m, /- \*\*Verdict\*\*: pass|revise|escalate/m])) {
-    const planCritic = await runProviderSession({
-      options,
-      taskDir,
-      projectRoot,
-      label: "plan-critic",
-      requireHandoffOnDrain: false,
-      prompt: [
-        "RUNNER_PLAN_CRITIC",
-        "语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。",
-        "你是独立的 plan critic subagent。",
-        `任务目录：${taskDir}`,
-        `请直接读取：${path.join(taskDir, "intake.md")}`,
-        `请直接读取：${path.join(taskDir, "plan.md")}`,
-        `phase check 模板：${path.join(projectRoot, "longtask/templates/phase-check.md")}`,
-        "除此之外，只读取 plan file map 明确命名的源码指针。不要使用 generator 聊天历史。",
-        "在 Context Boundary 字段中包含这个 lint 可识别短语：without generator or executor chat history。",
-        `写入 ${path.join(taskDir, "phase-checks/plan-check-01.md")}，Verdict 必须是 pass、revise 或 escalate。`,
-        "",
-        templateText(scriptsDir, "plan-critic-prompt.md"),
-      ].join("\n"),
-    });
-    if (planCritic.sawHardLimit) {
-      writeRunnerPaused(taskDir, "plan-critic 在 session 完成后达到 hard context budget", planCritic);
-      process.stdout.write("[runner] prepare 已在 plan critic 后暂停；重新运行同一命令可继续\n");
-      return;
-    }
-  } else {
-    printRunner("session plan-critic skipped: plan phase check already exists");
-    appendRunnerLog(taskDir, ["## Session Skipped", "- Label: plan-critic", "- Reason: plan phase check already exists", ""]);
-  }
-  requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-phase-check.js", args: [path.join(taskDir, "phase-checks/plan-check-01.md")], label: "lint plan phase check" }), "lint plan phase check");
-  requireOk(runNode(stateScript, [taskDir, "register-phase-check", "phase-checks/plan-check-01.md"]), "register plan phase check");
-  printRunner("state register phase-checks/plan-check-01.md");
-  appendRunnerLog(taskDir, ["## State Operation", "- Operation: register plan phase check", ""]);
-  if (artifactVerdict(planCheckPath) !== "pass") {
-    const verdict = artifactVerdict(planCheckPath) || "unknown";
-    printRunner(`prepare stopped: plan phase check verdict is ${verdict}`);
-    appendRunnerLog(taskDir, [
-      "## Runner Stop",
-      `- Reason: plan phase check verdict is ${verdict}`,
-      "- Next: revise `plan.md` according to `phase-checks/plan-check-01.md`, then rerun prepare.",
-      "",
-    ]);
+
+  const planCheckPassed = await runPlanCriticLoop({ options, taskDir, projectRoot, scriptsDir, stateScript, startNumber: 1 });
+  if (!planCheckPassed) {
+    printRunner("prepare stopped: no passing plan phase check");
+    appendRunnerLog(taskDir, ["## Runner Stop", "- Reason: no passing plan phase check", ""]);
     return;
   }
   if (readState(taskDir).phase === "plan") {
@@ -585,53 +793,10 @@ async function runPrepare({ options, taskDir, projectRoot, scriptsDir }) {
     appendRunnerLog(taskDir, ["## Session Skipped", "- Label: prepare-contract-generator", "- Reason: contract already exists and looks filled", ""]);
   }
 
-  const contractCheckPath = path.join(taskDir, "phase-checks/contract-check-01.md");
-  if (!artifactLooksFilled(contractCheckPath, [/- \*\*Phase\*\*: contract/m, /- \*\*Verdict\*\*: pass|revise|escalate/m])) {
-    const contractCritic = await runProviderSession({
-      options,
-      taskDir,
-      projectRoot,
-      label: "contract-critic",
-      requireHandoffOnDrain: false,
-      prompt: [
-        "RUNNER_CONTRACT_CRITIC",
-        "语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。",
-        "你是独立的 contract critic subagent。",
-        `任务目录：${taskDir}`,
-        `请直接读取：${path.join(taskDir, "intake.md")}`,
-        `请直接读取：${path.join(taskDir, "plan.md")}`,
-        `请直接读取：${path.join(taskDir, "contracts/sprint-01.md")}`,
-        `phase check 模板：${path.join(projectRoot, "longtask/templates/phase-check.md")}`,
-        "除此之外，只读取 contract context map 明确命名的源码指针。不要使用 generator 聊天历史。",
-        "在 Context Boundary 字段中包含这个 lint 可识别短语：without generator or executor chat history。",
-        `写入 ${path.join(taskDir, "phase-checks/contract-check-01.md")}，Verdict 必须是 pass、revise 或 escalate。`,
-        "",
-        templateText(scriptsDir, "contract-critic-prompt.md"),
-      ].join("\n"),
-    });
-    if (contractCritic.sawHardLimit) {
-      writeRunnerPaused(taskDir, "contract-critic 在 session 完成后达到 hard context budget", contractCritic);
-      process.stdout.write("[runner] prepare 已在 contract critic 后暂停；重新运行同一命令可继续\n");
-      return;
-    }
-  } else {
-    printRunner("session contract-critic skipped: contract phase check already exists");
-    appendRunnerLog(taskDir, ["## Session Skipped", "- Label: contract-critic", "- Reason: contract phase check already exists", ""]);
-  }
-  requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-phase-check.js", args: [path.join(taskDir, "phase-checks/contract-check-01.md")], label: "lint contract phase check" }), "lint contract phase check");
-  requireOk(runNodeLogged({ taskDir, scriptsDir, name: "lint-contract.js", args: [path.join(taskDir, "contracts/sprint-01.md")], label: "lint contract" }), "lint-contract");
-  requireOk(runNode(stateScript, [taskDir, "register-phase-check", "phase-checks/contract-check-01.md"]), "register contract phase check");
-  printRunner("state register phase-checks/contract-check-01.md");
-  appendRunnerLog(taskDir, ["## State Operation", "- Operation: register contract phase check", ""]);
-  if (artifactVerdict(contractCheckPath) !== "pass") {
-    const verdict = artifactVerdict(contractCheckPath) || "unknown";
-    printRunner(`prepare stopped: contract phase check verdict is ${verdict}`);
-    appendRunnerLog(taskDir, [
-      "## Runner Stop",
-      `- Reason: contract phase check verdict is ${verdict}`,
-      "- Next: revise `contracts/sprint-01.md` according to `phase-checks/contract-check-01.md`, then rerun prepare.",
-      "",
-    ]);
+  const contractCheckPassed = await runContractCriticLoop({ options, taskDir, projectRoot, scriptsDir, stateScript, startNumber: 1 });
+  if (!contractCheckPassed) {
+    printRunner("prepare stopped: no passing contract phase check");
+    appendRunnerLog(taskDir, ["## Runner Stop", "- Reason: no passing contract phase check", ""]);
     return;
   }
 

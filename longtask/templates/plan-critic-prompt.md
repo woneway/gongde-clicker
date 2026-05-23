@@ -11,6 +11,7 @@
 
 检查：
 - 是否偏离 intake
+- 是否误把 intake 产物中的阶段性说明当作整个任务的非目标；如果 intake 把“当前阶段暂不实现/不改代码/不进入改版”写成限制，应要求先修订 intake 或 plan 的任务边界，不要直接缩小后续计划
 - Finished Picture 是否让人能判断最终形态
 - Building Blocks 是否足够小、边界清楚、能映射到 contracts
 - Assembly Order 是否符合依赖关系
