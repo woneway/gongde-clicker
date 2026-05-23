@@ -1,3 +1,15 @@
+RUNNER_PLAN_CRITIC
+语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
+你是独立的 plan critic subagent。
+任务目录：/Users/lianwu/ai/projects/GongdeClicker/docs/longtasks/growth-adsense-viral-analysis
+请直接读取：/Users/lianwu/ai/projects/GongdeClicker/docs/longtasks/growth-adsense-viral-analysis/intake.md
+请直接读取：/Users/lianwu/ai/projects/GongdeClicker/docs/longtasks/growth-adsense-viral-analysis/plan.md
+phase check 模板：/Users/lianwu/ai/projects/GongdeClicker/longtask/templates/phase-check.md
+不要使用 generator 或 reviser 聊天历史；可以使用工具、相关能力、必要的代码/文档阅读、subagent 或 MCP 来核实判断。
+优先从 intake、plan、plan file map、源码、测试、配置和项目文档取证；不要把 runner 历史、workflow 内部资料、旧会话或无关本地 skill 文档当作当前项目事实来源。
+在 Context Boundary 字段中包含这个 lint 可识别短语：without generator or executor chat history。
+写入 /Users/lianwu/ai/projects/GongdeClicker/docs/longtasks/growth-adsense-viral-analysis/phase-checks/plan-check-01.md，Verdict 必须是 pass、revise 或 escalate。
+
 # Plan Critic 提示
 
 在创建 contract 前评审 `plan.md`。

@@ -1,17 +1,25 @@
 {
   "schema": "longtask-native",
   "task_id": "growth-adsense-viral-analysis",
-  "phase": "intake",
+  "phase": "contract",
   "current_sprint": "sprint-01",
   "latest_attempt": null,
   "attempt_status": null,
   "artifacts": {
     "intake": "intake.md",
-    "plan": null,
-    "execution_log": null,
-    "contracts": [],
+    "plan": "plan.md",
+    "execution_log": "execution-log.md",
+    "contracts": [
+      "contracts/sprint-01.md",
+      "contracts/sprint-02.md",
+      "contracts/sprint-03.md"
+    ],
     "phase_checks": [
-      "phase-checks/intake-check-01.md"
+      "phase-checks/intake-check-01.md",
+      "phase-checks/plan-check-01.md",
+      "phase-checks/contract-check-01.md",
+      "phase-checks/contract-check-02.md",
+      "phase-checks/contract-check-03.md"
     ],
     "reviews": [],
     "human_brief": null,

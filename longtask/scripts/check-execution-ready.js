@@ -37,6 +37,23 @@ let contract = "";
 if (fs.existsSync(contractPath)) contract = readFile(contractPath);
 if (field(contract, "Status") !== "locked") v("CONTRACT", "contract status must be locked before execution");
 if (!hasConcreteValue(field(contract, "Allowed Write Scope"))) v("WRITE-SCOPE", "contract must define Allowed Write Scope");
+const phaseCheckRel = field(contract, "Phase Check");
+if (!phaseCheckRel) {
+  v("CONTRACT", "contract must reference its Phase Check before execution");
+} else {
+  const phaseCheckPath = path.join(taskDir, phaseCheckRel);
+  if (!fs.existsSync(phaseCheckPath)) {
+    v("CONTRACT", `missing contract phase check ${phaseCheckRel}`);
+  } else {
+    const phaseCheck = readFile(phaseCheckPath);
+    if (field(phaseCheck, "Phase") !== "contract" || field(phaseCheck, "Verdict") !== "pass") {
+      v("CONTRACT", `${phaseCheckRel} must be a passing contract phase check`);
+    }
+    if (field(phaseCheck, "Artifact") !== `contracts/${currentSprint}.md`) {
+      v("CONTRACT", `${phaseCheckRel} must check contracts/${currentSprint}.md`);
+    }
+  }
+}
 
 function reviewNumber(name) {
   const match = name.match(/^review-(\d+)\.md$/);

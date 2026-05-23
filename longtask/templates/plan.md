@@ -20,6 +20,19 @@
 ## Progress Checkpoints
 - Block 1 done when <可观察完成条件>
 
+## Sprint Plan
+- sprint-01: Block 1 - <本 sprint 的合同目标>
+
+## Outcome Traceability
+- **Outcome ID**: O1
+  - **Level**: critical | important | advisory
+  - **Status**: closed | partial | unsupported | out-of-scope
+  - **Outcome**: <结果性承诺>
+  - **Mechanism**: <通过哪类能力、组件、流程、检查或约束达成；不要求代码细节>
+  - **Supporting Blocks/Tasks**: <Block/Task 引用>
+  - **Evidence**: <什么可观察现象证明它成立，以及如何验证>
+  - **Boundary**: <不承诺什么、哪些条件下不成立、哪些风险被接受>
+
 ## File Map
 - Create: `<路径>` - <职责>
 - Modify: `<路径>` - <职责>

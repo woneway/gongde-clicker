@@ -2,7 +2,9 @@
 
 执行完成后进行最终 review。
 
-不要使用 generator 或 executor 的聊天历史。只使用锁定的 contract、execution log、证据、git diff 和相关源码文件。
+不要使用 generator 或 executor 的聊天历史。以锁定的 contract、execution log、证据、git diff 和相关源码文件为主要事实来源；必要时可以使用工具、相关能力、代码/文档阅读、subagent 或 MCP 来核实最终结论。
+
+不要把 runner 历史、workflow 内部资料、无关本地 skill 文档或历史会话当作当前项目事实来源。隔离聊天历史不等于禁用工具、代码阅读、文档阅读、skill、subagent 或 MCP 能力；关键是所有判断都要能回到当前项目事实和执行证据。
 
 语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
 

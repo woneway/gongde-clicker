@@ -1,0 +1,28 @@
+{
+  "label": "prepare-plan-generator",
+  "startedAt": "2026-05-23T16:24:20.562Z",
+  "finishedAt": "2026-05-23T16:26:57.891Z",
+  "durationMs": 157329,
+  "ok": true,
+  "code": 0,
+  "signal": null,
+  "interrupted": false,
+  "interruptReason": null,
+  "usage": {
+    "inputTokens": 323652,
+    "cachedInputTokens": 227200,
+    "outputTokens": 7307,
+    "reasoningOutputTokens": 975,
+    "effectiveInputTokens": 96452,
+    "grossUsedTokens": 331934,
+    "effectiveUsedTokens": 104734,
+    "usedTokens": 104734
+  },
+  "budget": {
+    "state": "running",
+    "ratio": 0.40594573643410853,
+    "usedTokens": 104734,
+    "contextLimit": 258000
+  },
+  "jsonlError": null
+}

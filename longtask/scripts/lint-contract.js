@@ -22,6 +22,7 @@ runCheck("lint-contract", process.argv[2], (text, file) => {
     "Status",
     "Goal",
     "Plan Blocks",
+    "Outcome Links",
     "Visible Completion",
     "Context Map",
     "Allowed Write Scope",
@@ -46,6 +47,13 @@ runCheck("lint-contract", process.argv[2], (text, file) => {
   if (!hasVerifyBy(text)) violations.push("[AC] acceptance criteria must include concrete Verify by lines");
   if (!/Block\s+\d+:/i.test(field(text, "Plan Blocks") || "")) {
     violations.push("[BLOCKS] Plan Blocks must reference Block N from plan");
+  }
+  const outcomeLinks = field(text, "Outcome Links") || "";
+  if (!/O\d+\b/i.test(outcomeLinks)) {
+    violations.push("[TRACEABILITY] Outcome Links must reference at least one plan Outcome ID such as O1");
+  }
+  if (/\b(partial|unsupported)\b/i.test(outcomeLinks)) {
+    violations.push("[TRACEABILITY] Outcome Links must not use partial or unsupported outcomes as acceptance targets");
   }
   if (!/done when|complete|passes|exists|verified/i.test(field(text, "Visible Completion") || "")) {
     violations.push("[BLOCKS] Visible Completion must describe observable completion");

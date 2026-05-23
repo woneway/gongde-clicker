@@ -1,0 +1,28 @@
+{
+  "label": "contract-critic-03",
+  "startedAt": "2026-05-23T16:34:29.788Z",
+  "finishedAt": "2026-05-23T16:35:58.162Z",
+  "durationMs": 88374,
+  "ok": true,
+  "code": 0,
+  "signal": null,
+  "interrupted": false,
+  "interruptReason": null,
+  "usage": {
+    "inputTokens": 211135,
+    "cachedInputTokens": 174720,
+    "outputTokens": 3939,
+    "reasoningOutputTokens": 561,
+    "effectiveInputTokens": 36415,
+    "grossUsedTokens": 215635,
+    "effectiveUsedTokens": 40915,
+    "usedTokens": 40915
+  },
+  "budget": {
+    "state": "running",
+    "ratio": 0.15858527131782946,
+    "usedTokens": 40915,
+    "contextLimit": 258000
+  },
+  "jsonlError": null
+}

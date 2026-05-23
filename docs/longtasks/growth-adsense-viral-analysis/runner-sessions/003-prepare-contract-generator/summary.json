@@ -1,0 +1,28 @@
+{
+  "label": "prepare-contract-generator",
+  "startedAt": "2026-05-23T16:28:36.155Z",
+  "finishedAt": "2026-05-23T16:31:37.054Z",
+  "durationMs": 180899,
+  "ok": true,
+  "code": 0,
+  "signal": null,
+  "interrupted": false,
+  "interruptReason": null,
+  "usage": {
+    "inputTokens": 241456,
+    "cachedInputTokens": 179712,
+    "outputTokens": 7854,
+    "reasoningOutputTokens": 535,
+    "effectiveInputTokens": 61744,
+    "grossUsedTokens": 249845,
+    "effectiveUsedTokens": 70133,
+    "usedTokens": 70133
+  },
+  "budget": {
+    "state": "running",
+    "ratio": 0.2718333333333333,
+    "usedTokens": 70133,
+    "contextLimit": 258000
+  },
+  "jsonlError": null
+}

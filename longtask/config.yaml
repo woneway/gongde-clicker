@@ -74,6 +74,8 @@ rules:
       - Building Blocks
       - Assembly Order
       - Progress Checkpoints
+      - Sprint Plan
+      - Outcome Traceability
       - File Map
       - Tasks
       - Verification
@@ -87,6 +89,7 @@ rules:
       - Status
       - Goal
       - Plan Blocks
+      - Outcome Links
       - Visible Completion
       - Acceptance Criteria
       - Required Evidence

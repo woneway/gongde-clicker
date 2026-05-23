@@ -1,0 +1,28 @@
+{
+  "label": "plan-critic-01",
+  "startedAt": "2026-05-23T16:26:57.952Z",
+  "finishedAt": "2026-05-23T16:28:35.973Z",
+  "durationMs": 98021,
+  "ok": true,
+  "code": 0,
+  "signal": null,
+  "interrupted": false,
+  "interruptReason": null,
+  "usage": {
+    "inputTokens": 305510,
+    "cachedInputTokens": 251904,
+    "outputTokens": 4250,
+    "reasoningOutputTokens": 213,
+    "effectiveInputTokens": 53606,
+    "grossUsedTokens": 309973,
+    "effectiveUsedTokens": 58069,
+    "usedTokens": 58069
+  },
+  "budget": {
+    "state": "running",
+    "ratio": 0.2250736434108527,
+    "usedTokens": 58069,
+    "contextLimit": 258000
+  },
+  "jsonlError": null
+}

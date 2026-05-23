@@ -29,6 +29,7 @@ function runCodex({
   onBudget,
   onInterrupt,
   onEvent,
+  onStderr,
 }) {
   return new Promise((resolve) => {
     if (stdoutPath) fs.writeFileSync(stdoutPath, "");
@@ -104,6 +105,7 @@ function runCodex({
     child.stderr.on("data", (chunk) => {
       stderr += chunk;
       if (stderrPath) fs.appendFileSync(stderrPath, chunk);
+      if (onStderr) onStderr(chunk);
     });
 
     child.on("error", (error) => {

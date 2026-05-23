@@ -7,8 +7,8 @@ function read(taskDir, rel) {
 
 function section(text, name) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = text.match(new RegExp(`^## ${escaped}\\s*\\n([\\s\\S]*?)(?=^## |$)`, "m"));
-  return match ? match[1].trim() : "";
+  const match = text.match(new RegExp(`(^|\\n)##\\s+${escaped}\\b[^\\n]*\\n([\\s\\S]*?)(?=\\n##\\s|\\n*$)`));
+  return match ? match[2].trim() : "";
 }
 
 function bulletLines(text) {
@@ -60,13 +60,20 @@ function criteriaForBlock(criteria, block) {
   return matches.length ? matches : criteria.slice(0, 1);
 }
 
+function contractRelForSprint(artifacts, sprint) {
+  const wanted = `contracts/${sprint || "sprint-01"}.md`;
+  const contracts = artifacts.contracts || [];
+  return contracts.find((relPath) => path.basename(relPath, ".md") === (sprint || "sprint-01")) || wanted;
+}
+
 function deriveWorkPackage(taskDir) {
   const state = JSON.parse(read(taskDir, "state.json"));
   if (state.schema !== "longtask-native") throw new Error("state schema must be longtask-native");
   const artifacts = state.artifacts || {};
   const planRel = artifacts.plan || "plan.md";
   const logRel = artifacts.execution_log || "execution-log.md";
-  const contractRel = (artifacts.contracts && artifacts.contracts[0]) || `contracts/${state.current_sprint || "sprint-01"}.md`;
+  const currentSprint = state.current_sprint || "sprint-01";
+  const contractRel = contractRelForSprint(artifacts, currentSprint);
   const planText = read(taskDir, planRel);
   const contractText = read(taskDir, contractRel);
   const logPath = path.join(taskDir, logRel);
@@ -78,7 +85,7 @@ function deriveWorkPackage(taskDir) {
     taskDir,
     taskId: state.task_id || path.basename(taskDir),
     phase: state.phase,
-    currentSprint: state.current_sprint || "sprint-01",
+    currentSprint,
     latestAttempt: state.latest_attempt || "none",
     planRel,
     contractRel,
