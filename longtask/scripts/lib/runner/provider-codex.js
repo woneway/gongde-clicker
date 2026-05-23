@@ -1,4 +1,5 @@
 const { spawn } = require("node:child_process");
+const fs = require("node:fs");
 const { budgetStatus } = require("./budget");
 const { parseJsonlLine, usageEvent } = require("./codex-jsonl");
 
@@ -23,10 +24,14 @@ function runCodex({
   maxSessionMs,
   softDrainMs,
   hardKillMs,
+  stdoutPath,
+  stderrPath,
   onBudget,
   onInterrupt,
 }) {
   return new Promise((resolve) => {
+    if (stdoutPath) fs.writeFileSync(stdoutPath, "");
+    if (stderrPath) fs.writeFileSync(stderrPath, "");
     const child = spawn(
       codexBin,
       buildCodexExecArgs({ cwd, prompt }),
@@ -37,6 +42,7 @@ function runCodex({
     let stderr = "";
     let jsonlError = null;
     let lastBudget = null;
+    let lastUsage = null;
     let interrupted = false;
     let interruptReason = null;
     let closed = false;
@@ -65,12 +71,14 @@ function runCodex({
     child.stdout.setEncoding("utf8");
     child.stdout.on("data", (chunk) => {
       stdout += chunk;
+      if (stdoutPath) fs.appendFileSync(stdoutPath, chunk);
       for (const line of chunk.split(/\r?\n/)) {
         if (!line.trim()) continue;
         try {
           const event = parseJsonlLine(line);
           const usage = usageEvent(event);
           if (usage) {
+            lastUsage = usage;
             lastBudget = budgetStatus({
               usedTokens: usage.usedTokens,
               contextLimit,
@@ -88,18 +96,19 @@ function runCodex({
     child.stderr.setEncoding("utf8");
     child.stderr.on("data", (chunk) => {
       stderr += chunk;
+      if (stderrPath) fs.appendFileSync(stderrPath, chunk);
     });
 
     child.on("error", (error) => {
       closed = true;
       for (const timer of timers) clearTimeout(timer);
-      resolve({ ok: false, code: null, stdout, stderr: `${stderr}${error.message}`, lastBudget, jsonlError, interrupted, interruptReason });
+      resolve({ ok: false, code: null, stdout, stderr: `${stderr}${error.message}`, lastBudget, lastUsage, jsonlError, interrupted, interruptReason });
     });
 
     child.on("close", (code, signal) => {
       closed = true;
       for (const timer of timers) clearTimeout(timer);
-      resolve({ ok: code === 0 && !jsonlError, code, signal, stdout, stderr, lastBudget, jsonlError, interrupted, interruptReason });
+      resolve({ ok: code === 0 && !jsonlError, code, signal, stdout, stderr, lastBudget, lastUsage, jsonlError, interrupted, interruptReason });
     });
   });
 }
