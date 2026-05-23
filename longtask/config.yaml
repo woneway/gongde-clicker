@@ -1,0 +1,131 @@
+schema: longtask-native
+artifact_root: docs/longtasks
+
+phases:
+  intake:
+    template: templates/intake.md
+    check: scripts/lint-intake.js
+    gan_check: true
+    critic_role: intake-critic
+  plan:
+    template: templates/plan.md
+    check: scripts/lint-plan.js
+    gan_check: true
+    critic_role: plan-critic
+  contract:
+    template: templates/contract.md
+    check: scripts/lint-contract.js
+    gan_check: true
+    critic_role: contract-critic
+  execute:
+    template: templates/execution-log.md
+    check: scripts/check-execution-ready.js
+    gan_check: true
+    critic_role: execution-checker
+  review:
+    template: templates/review.md
+    check: scripts/lint-review.js
+    gan_check: false
+    critic_role: independent-reviewer
+  recovery:
+    template: templates/handoff.md
+    check: scripts/check-recovery-ready.js
+    gan_check: false
+
+transitions:
+  intake: [plan, human_brief]
+  plan: [contract, human_brief]
+  contract: [execute, human_brief]
+  execute: [review, repair, human_brief]
+  review: [done, repair, human_brief]
+  repair: [execute, human_brief]
+  human_brief: [intake, contract, done]
+  done: []
+
+failure_classifications:
+  - none
+  - requirement-gap
+  - context-gap
+  - contract-gap
+  - build-type-failure
+  - implementation-bug
+  - environment-failure
+  - repeated-same-failure
+  - permission-gap
+  - safety-gap
+
+rules:
+  intake:
+    required_sections:
+      - Requirement
+      - Context
+      - Assumptions
+      - Non-Goals
+      - Decisions
+      - Open Questions
+      - Clarification Coverage
+      - Resolved Unknowns
+      - Readiness Decision
+  plan:
+    required_sections:
+      - Goal
+      - Architecture
+      - Finished Picture
+      - Building Blocks
+      - Assembly Order
+      - Progress Checkpoints
+      - File Map
+      - Tasks
+      - Verification
+    forbidden_placeholders:
+      - TBD
+      - TODO
+      - implement later
+      - fill in details
+  contract:
+    required_fields:
+      - Status
+      - Goal
+      - Plan Blocks
+      - Visible Completion
+      - Acceptance Criteria
+      - Required Evidence
+      - Context Map
+      - Allowed Write Scope
+      - Verification Plan
+      - Reviewer Routing
+      - Out-of-Scope
+      - Risk Notes
+    allowed_status:
+      - proposed
+      - approved
+      - locked
+  review:
+    allowed_verdict:
+      - pass
+      - fail
+      - escalate
+    auto_repair_allowed:
+      - implementation-bug
+      - build-type-failure
+    build_type_repair_agent: build-error-resolver
+  recovery:
+    required_artifacts:
+      - intake.md
+      - plan.md
+      - state.json
+      - execution-log.md
+
+gan:
+  loop: generate -> check -> revise -> lock
+  rule: 每个 review 之前的阶段都必须通过自己的对抗性 phase check，才能进入下一阶段。
+  required_subagents:
+    intake: intake-critic
+    plan: plan-critic
+    contract: contract-critic
+    execute: execution-checker
+    review: independent-reviewer
+  context_policy:
+    max_budget_ratio: 0.4
+    no_chat_history_for_critics: true
+    review_reads_execution_artifacts_not_executor_history: true

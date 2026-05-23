@@ -1,0 +1,18 @@
+{
+  "schema": "longtask-native",
+  "task_id": "<task-id>",
+  "phase": "intake",
+  "current_sprint": "sprint-01",
+  "latest_attempt": null,
+  "attempt_status": null,
+  "artifacts": {
+    "intake": "intake.md",
+    "plan": "plan.md",
+    "execution_log": "execution-log.md",
+    "contracts": ["contracts/sprint-01.md"],
+    "phase_checks": [],
+    "reviews": [],
+    "human_brief": null,
+    "handoff": null
+  }
+}
