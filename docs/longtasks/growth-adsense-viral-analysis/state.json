@@ -1,0 +1,20 @@
+{
+  "schema": "longtask-native",
+  "task_id": "growth-adsense-viral-analysis",
+  "phase": "intake",
+  "current_sprint": "sprint-01",
+  "latest_attempt": null,
+  "attempt_status": null,
+  "artifacts": {
+    "intake": "intake.md",
+    "plan": null,
+    "execution_log": null,
+    "contracts": [],
+    "phase_checks": [
+      "phase-checks/intake-check-01.md"
+    ],
+    "reviews": [],
+    "human_brief": null,
+    "handoff": null
+  }
+}
