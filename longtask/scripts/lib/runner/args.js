@@ -48,7 +48,7 @@ function parseArgs(argv) {
   }
 
   if (parsed.provider !== "codex") throw new Error(`unsupported provider ${parsed.provider}`);
-  if (!["prepare", "execute"].includes(parsed.mode)) throw new Error(`unsupported mode ${parsed.mode}`);
+  if (!["prepare", "execute", "report"].includes(parsed.mode)) throw new Error(`unsupported mode ${parsed.mode}`);
   if (parsed.softRatio >= parsed.hardRatio) throw new Error("soft ratio must be lower than hard ratio");
   if (parsed.hardRatio > 1) throw new Error("hard ratio must be <= 1");
 

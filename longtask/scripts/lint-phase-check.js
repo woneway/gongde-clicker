@@ -34,13 +34,13 @@ runCheck("lint-phase-check", process.argv[2], (text) => {
   if (verdict === "pass" && !/none/i.test(field(text, "Required Revisions") || "")) {
     violations.push("[REVISIONS] pass requires Required Revisions to be none");
   }
-  if (!/(checked|read|queried|reviewed|artifacts|source|evidence|none needed)/i.test(field(text, "Self-Recovery Attempted") || "")) {
+  if (!/(checked|read|queried|reviewed|artifacts|source|evidence|none needed|检查|读取|查询|评审|审阅|证据|源码|产物|无需)/i.test(field(text, "Self-Recovery Attempted") || "")) {
     violations.push("[SELF-RECOVERY] must describe what was checked before escalation");
   }
   if (verdict === "pass" && !/none/i.test(field(text, "Escalation Decision") || "")) {
     violations.push("[ESCALATION] pass requires Escalation Decision to be none");
   }
-  if (!/no .*chat history|not receive|without .*history|artifact/i.test(contextBoundary)) {
+  if (!/no .*chat history|not receive|did not use .*history|without .*history|artifact/i.test(contextBoundary)) {
     violations.push("[CONTEXT] Context Boundary must state what history or context was withheld");
   }
   if (!hasConcreteSection(text, "Findings")) violations.push("[FINDINGS] missing concrete findings");

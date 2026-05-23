@@ -1,14 +1,14 @@
 function renderMaxRepairHumanBrief({ taskId, maxRepairAttempts, latestAttempt, reviewRel, handoffRel }) {
   const id = taskId || "<task-id>";
   return [
-    `# Human Brief: ${id}`,
+    `# 人工简报：${id}`,
     "",
     "- **Trigger Phase**: review",
     "- **Failure Classification**: repeated-same-failure",
-    `- **Decision Needed**: automatic repair reached ${maxRepairAttempts} attempts; decide whether to revise the contract, return to intake, or stop.`,
-    "- **Blocked Route**: repeated automatic repair may continue changing code without resolving the underlying failure.",
-    `- **Self-Recovery Tried**: reviewed latest attempt ${latestAttempt || "unknown"}, latest review, and handoff pointers before routing to human decision.`,
-    "- **Smallest Human Decision**: choose one route: revise contract, return to intake, abort, or mark done only if external evidence justifies it.",
+    `- **Decision Needed**: 自动修复已达到 ${maxRepairAttempts} 次上限；需要决定是修订 contract、回到 intake，还是停止任务。`,
+    "- **Blocked Route**: 继续自动修复可能持续改代码，但无法解决同一个底层失败。",
+    `- **Self-Recovery Tried**: 已检查最新 attempt ${latestAttempt || "unknown"}、最新 review 和 handoff 指针，再路由到人工决策。`,
+    "- **Smallest Human Decision**: 选择一个路线：修订 contract、回到 intake、中止，或仅在外部证据足够时标记完成。",
     `- **Resume Command**: \`node longtask/scripts/longtask-state.js docs/longtasks/${id} status\``,
     "- **Recommended Options**: contract, intake, abort, escalation",
     "- **Evidence**:",
@@ -17,7 +17,7 @@ function renderMaxRepairHumanBrief({ taskId, maxRepairAttempts, latestAttempt, r
     "",
     "## Summary",
     "",
-    `Automatic repair reached the configured limit of ${maxRepairAttempts}. A human must decide the next route before more automatic changes are safe.`,
+    `自动修复已达到配置上限 ${maxRepairAttempts} 次。继续自动修改前，必须由人类决定下一条路线。`,
     "",
   ].join("\n");
 }

@@ -3,7 +3,9 @@ sprint: sprint-01
 status: proposed
 ---
 
-# Sprint Contract: sprint-01
+# Sprint 合同：sprint-01
+
+> 语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
 
 - **Status**: proposed
 - **Goal**: <有边界的结果>

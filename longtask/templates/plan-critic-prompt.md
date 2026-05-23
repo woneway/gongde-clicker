@@ -4,6 +4,11 @@
 
 不要使用 generator 或 executor 的聊天历史。只使用 `intake.md`、`plan.md`、引用的源码指针和文件地图。
 
+语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
+
+`Context Boundary` 字段必须明确写出被隔离的上下文，并包含 lint 可识别的短语，例如：
+`without generator or executor chat history` 或 `did not receive generator or executor chat history`。
+
 检查：
 - 是否偏离 intake
 - Finished Picture 是否让人能判断最终形态

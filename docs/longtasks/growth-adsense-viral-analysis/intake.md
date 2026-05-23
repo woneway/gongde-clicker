@@ -1,4 +1,6 @@
-# Longtask Intake: growth-adsense-viral-analysis
+# Longtask 需求入口：growth-adsense-viral-analysis
+
+> 语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
 
 ## Requirement
 用户需要了解当前 Gongde Clicker 项目是否已经具备推广基础，并评估通过 Google AdSense 获利前，产品本身能否引发用户主动使用、复访和病毒式传播。当前阶段先做 intake 和事实基线，不直接进入改版实现。
@@ -34,7 +36,7 @@
 - 下一阶段计划应优先补足增长闭环：可验证分享图质量、社交预览、短内容/SEO 页面、埋点漏斗、首访到分享的路径，而不是先堆广告位。
 
 ## Open Questions
-- none
+- none（当前无开放问题）
 
 ## Clarification Coverage
 - Needed to understand: 当前产品是否有核心可玩性、复访机制、个性化表达、分享触发、AdSense 审核面、抓取基础、政策风险和已验证状态。

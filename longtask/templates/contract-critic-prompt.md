@@ -4,6 +4,11 @@
 
 不要使用 generator 或 executor 的聊天历史。只使用 `plan.md`、contract、源码指针和已知证据要求。
 
+语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
+
+`Context Boundary` 字段必须明确写出被隔离的上下文，并包含 lint 可识别的短语，例如：
+`without generator or executor chat history` 或 `did not receive generator or executor chat history`。
+
 检查：
 - 可观察验收标准
 - 必需证据覆盖

@@ -1,4 +1,6 @@
-# Human Brief: <task-id>
+# 人工简报：<task-id>
+
+> 语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
 
 - **Trigger Phase**: <intake | plan | contract | execute | review>
 - **Failure Classification**: <requirement-gap | context-gap | contract-gap | environment-failure | repeated-same-failure | permission-gap | safety-gap>

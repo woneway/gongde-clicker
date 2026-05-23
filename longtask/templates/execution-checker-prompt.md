@@ -4,6 +4,8 @@
 
 不要使用 generator 或 executor 的聊天历史。只使用锁定的 contract、git diff、`execution-log.md`、证据路径和相关源码文件。
 
+语言要求：自然语言内容必须使用中文。保留代码标识符、命令、路径、文件名、字段 key 和 API 名称的原文。
+
 检查：
 - 写入范围是否合规
 - 必需证据是否存在

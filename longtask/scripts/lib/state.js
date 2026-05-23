@@ -39,7 +39,7 @@ function executionLogPath(taskDir, state) {
 function appendExecutionLog(taskDir, state, lines) {
   const logPath = executionLogPath(taskDir, state);
   fs.mkdirSync(path.dirname(logPath), { recursive: true });
-  let text = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf8") : `# Execution Log: ${state.task_id || path.basename(taskDir)}\n`;
+  let text = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf8") : `# 执行记录：${state.task_id || path.basename(taskDir)}\n`;
   if (!/\n## Attempts\b/.test(text)) {
     text = `${text.replace(/\s*$/, "\n\n")}## Attempts\n`;
   }
