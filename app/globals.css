@@ -426,6 +426,32 @@ button {
   user-select: text;
 }
 
+.seo-summary {
+  max-width: 920px;
+  width: 100%;
+  justify-self: center;
+  padding: 18px;
+  border: 1px solid rgba(232, 215, 189, 0.9);
+  border-radius: 8px;
+  background: rgba(255, 253, 247, 0.72);
+  box-shadow: 0 10px 24px rgba(62, 39, 22, 0.06);
+  user-select: text;
+}
+
+.seo-summary h1 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: clamp(22px, 5vw, 32px);
+  line-height: 1.2;
+}
+
+.seo-summary p {
+  margin: 0;
+  color: #51463f;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
 .fortune-card,
 .achievement-card {
   padding: 18px;

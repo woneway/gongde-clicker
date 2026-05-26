@@ -1,6 +1,10 @@
 export const metadata = {
-  title: "FAQ - 功德敲敲",
-  description: "了解 Gongde Clicker 的计数、隐私、键盘操作和使用边界。",
+  title: "在线电子木鱼 FAQ - 功德敲敲 Gongde Clicker",
+  description:
+    "了解功德敲敲 Gongde Clicker 在线电子木鱼的计数、隐私、键盘操作、免费使用和使用边界。",
+  alternates: {
+    canonical: "https://gongdeclicker.com/faq",
+  },
 };
 
 const faqs = [
@@ -36,9 +40,28 @@ const faqs = [
   },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answer,
+    },
+  })),
+};
+
 export default function FaqPage() {
   return (
     <main className="info-page">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqJsonLd),
+        }}
+      />
       <section className="info-panel">
         <p className="eyebrow">FAQ</p>
         <h1>常见问题</h1>

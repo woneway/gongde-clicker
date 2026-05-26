@@ -1,6 +1,10 @@
 export const metadata = {
-  title: "联系 - 功德敲敲",
-  description: "联系 Gongde Clicker，反馈问题、提出建议或沟通合作。",
+  title: "联系功德敲敲 Gongde Clicker",
+  description:
+    "联系功德敲敲 Gongde Clicker，反馈在线电子木鱼页面问题、提出建议或沟通合作。",
+  alternates: {
+    canonical: "https://gongdeclicker.com/contact",
+  },
 };
 
 export default function ContactPage() {

@@ -423,6 +423,16 @@ export function GongdeClicker() {
         </div>
       </section>
 
+      <section className="seo-summary" aria-labelledby="seo-summary-title">
+        <p className="section-kicker">在线电子木鱼</p>
+        <h1 id="seo-summary-title">功德敲敲 Gongde Clicker</h1>
+        <p>
+          功德敲敲是一个免费的在线电子木鱼和木鱼模拟器。打开网页就能点击木鱼、
+          按空格敲击、记录今日功德和累计功德，适合上班摸鱼解压、学习休息、
+          等待构建或开会前放松一下。
+        </p>
+      </section>
+
       <section className="growth-panel" aria-label="每日功德签和成就">
         <article className="fortune-card">
           <span className="section-kicker">今日功德签</span>

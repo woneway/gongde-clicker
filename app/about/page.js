@@ -1,6 +1,10 @@
 export const metadata = {
-  title: "关于 - 功德敲敲",
-  description: "了解 Gongde Clicker 这个在线电子木鱼解压工具的用途、设计原则和使用边界。",
+  title: "关于功德敲敲 Gongde Clicker - 在线电子木鱼解压工具",
+  description:
+    "了解功德敲敲 Gongde Clicker 这个在线电子木鱼、功德点击器和上班摸鱼解压工具的用途、设计原则和使用边界。",
+  alternates: {
+    canonical: "https://gongdeclicker.com/about",
+  },
 };
 
 export default function AboutPage() {

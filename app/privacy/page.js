@@ -1,6 +1,10 @@
 export const metadata = {
-  title: "隐私政策 - 功德敲敲",
-  description: "了解功德敲敲如何使用 localStorage、匿名统计和未来可能接入的第三方广告服务。",
+  title: "隐私政策 - 功德敲敲 Gongde Clicker",
+  description:
+    "了解功德敲敲 Gongde Clicker 在线电子木鱼如何使用 localStorage、匿名统计和未来可能接入的第三方广告服务。",
+  alternates: {
+    canonical: "https://gongdeclicker.com/privacy",
+  },
 };
 
 export default function PrivacyPage() {

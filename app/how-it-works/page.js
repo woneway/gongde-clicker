@@ -1,6 +1,10 @@
 export const metadata = {
-  title: "玩法说明 - 功德敲敲",
-  description: "了解 Gongde Clicker 如何计数、保存数据、播放声音和处理每日重置。",
+  title: "在线电子木鱼玩法说明 - 功德敲敲 Gongde Clicker",
+  description:
+    "了解功德敲敲 Gongde Clicker 在线电子木鱼如何计数、保存数据、播放声音、支持空格键敲击和每日重置。",
+  alternates: {
+    canonical: "https://gongdeclicker.com/how-it-works",
+  },
 };
 
 const steps = [

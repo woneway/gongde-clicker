@@ -4,24 +4,28 @@ import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
   metadataBase: new URL("https://gongdeclicker.com/"),
-  title: "功德敲敲 - 上班摸鱼，在线敲木鱼",
-  description: "Gongde Clicker 是一个搞笑解压的在线电子木鱼功德点击器。",
+  title: "功德敲敲 Gongde Clicker - 在线电子木鱼功德点击器",
+  description:
+    "功德敲敲 Gongde Clicker 是免费的在线电子木鱼和木鱼模拟器，适合上班摸鱼、学习间隙和日常解压。",
   keywords: [
     "功德敲敲",
     "Gongde Clicker",
     "在线木鱼",
+    "在线电子木鱼",
     "电子木鱼",
     "功德点击器",
     "木鱼模拟器",
     "上班摸鱼",
+    "上班摸鱼解压",
     "解压工具",
   ],
   alternates: {
     canonical: "https://gongdeclicker.com/",
   },
   openGraph: {
-    title: "功德敲敲 - 上班摸鱼，在线敲木鱼",
-    description: "打开网页，点击木鱼或按空格键，给今天加一点功德。",
+    title: "功德敲敲 Gongde Clicker - 在线电子木鱼",
+    description:
+      "打开网页，点击木鱼或按空格键，使用免费的在线电子木鱼给今天加一点功德。",
     url: "https://gongdeclicker.com/",
     siteName: "功德敲敲",
     locale: "zh_CN",
@@ -29,15 +33,54 @@ export const metadata = {
   },
   twitter: {
     card: "summary",
-    title: "功德敲敲 - 上班摸鱼，在线敲木鱼",
+    title: "功德敲敲 Gongde Clicker - 在线电子木鱼",
     description: "在线电子木鱼解压工具，点击一下，功德 +1。",
   },
+};
+
+const webApplicationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "功德敲敲",
+  "alternateName": "Gongde Clicker",
+  "url": "https://gongdeclicker.com/",
+  "applicationCategory": "EntertainmentApplication",
+  "operatingSystem": "Any",
+  "inLanguage": "zh-CN",
+  "isAccessibleForFree": true,
+  "description":
+    "免费的在线电子木鱼和功德点击器，适合上班摸鱼、学习间隙和日常解压。",
+};
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "功德敲敲",
+      "item": "https://gongdeclicker.com/",
+    },
+  ],
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(webApplicationJsonLd),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbJsonLd),
+          }}
+        />
         <script
           async
           crossOrigin="anonymous"
