@@ -117,6 +117,30 @@ button {
   background: rgba(255, 255, 255, 0.78);
 }
 
+.site-footer {
+  width: min(960px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 16px 0 26px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 4px 0 0;
+}
+
+.brand-binding {
+  color: #51463f;
+  font-weight: 800;
+}
+
+.site-footer a {
+  color: var(--blue);
+  font-weight: 800;
+}
+
 .clicker-page {
   width: min(960px, calc(100% - 28px));
   margin: 0 auto;

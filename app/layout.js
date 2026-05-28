@@ -105,6 +105,18 @@ export default function RootLayout({ children }) {
           </nav>
         </header>
         {children}
+        <footer className="site-footer">
+          <p className="brand-binding">
+            功德敲敲 Gongde Clicker 是 gongdeclicker.com 的在线电子木鱼工具。
+          </p>
+          <p>
+            <Link href="/">gongdeclicker.com</Link>
+            <span aria-hidden="true"> · </span>
+            <Link href="/about">关于功德敲敲</Link>
+            <span aria-hidden="true"> · </span>
+            <Link href="/faq">FAQ</Link>
+          </p>
+        </footer>
         {process.env.GITHUB_PAGES !== "1" ? <Analytics /> : null}
       </body>
     </html>

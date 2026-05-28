@@ -78,3 +78,16 @@ test("FAQ page exposes FAQPage structured data", () => {
 test("sitemap lastmod reflects the latest SEO update", () => {
   assert.match(sitemap, /<lastmod>2026-05-26<\/lastmod>/);
 });
+
+test("site footer binds the Chinese brand to the domain", () => {
+  assert.match(layout, /brand-binding/);
+  assert.match(layout, /功德敲敲 Gongde Clicker 是 gongdeclicker\.com 的在线电子木鱼工具/);
+});
+
+test("FAQ explains the Chinese and English brand names refer to the same site", () => {
+  const faqPage = readFileSync(new URL("../app/faq/page.js", import.meta.url), "utf8");
+
+  assert.match(faqPage, /功德敲敲和 Gongde Clicker 是同一个网站吗/);
+  assert.match(faqPage, /功德敲敲就是 Gongde Clicker/);
+  assert.match(faqPage, /gongdeclicker\.com/);
+});
