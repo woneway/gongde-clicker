@@ -86,6 +86,11 @@ export default function RootLayout({ children }) {
           crossOrigin="anonymous"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1739691894917552"
         />
+        <script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "2ca047e8f5da4980b15b6fc1cc988554"}'
+        />
       </head>
       <body>
         <header className="site-header">
