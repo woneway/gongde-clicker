@@ -117,7 +117,10 @@ export default function RootLayout({ children }) {
             <Link href="/faq">FAQ</Link>
           </p>
         </footer>
-        {process.env.GITHUB_PAGES !== "1" ? <Analytics /> : null}
+        {process.env.VERCEL &&
+        process.env.NEXT_PUBLIC_DISABLE_ANALYTICS !== "1" ? (
+          <Analytics />
+        ) : null}
       </body>
     </html>
   );
