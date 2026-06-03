@@ -1,3 +1,5 @@
+import { AdsenseUnit } from "../../components/adsense-unit";
+
 export const metadata = {
   title: "在线电子木鱼玩法说明 - 功德敲敲 Gongde Clicker",
   description:
@@ -52,6 +54,8 @@ export default function HowItWorksPage() {
           如果设备不支持这些能力，点击计数仍然会正常工作。
         </p>
       </section>
+
+      <AdsenseUnit slot="5762213705" />
     </main>
   );
 }

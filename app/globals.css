@@ -1076,3 +1076,20 @@ button {
     justify-self: center;
   }
 }
+
+.ad-slot {
+  display: block;
+  width: 100%;
+  max-width: 728px;
+  margin: 32px auto 8px;
+  text-align: center;
+  min-height: 100px;
+}
+
+.ad-slot-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #9a8f80;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}

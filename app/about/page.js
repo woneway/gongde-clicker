@@ -1,3 +1,5 @@
+import { AdsenseUnit } from "../../components/adsense-unit";
+
 export const metadata = {
   title: "关于功德敲敲 Gongde Clicker - 在线电子木鱼解压工具",
   description:
@@ -30,6 +32,8 @@ export default function AboutPage() {
           并在隐私政策中说明相关第三方服务。
         </p>
       </section>
+
+      <AdsenseUnit slot="5762213705" />
     </main>
   );
 }

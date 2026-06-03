@@ -26,6 +26,7 @@ import {
   saveWish,
 } from "../lib/gongde-growth";
 import { renderWishCardToDataUrl } from "../lib/wish-card";
+import { AdsenseUnit } from "./adsense-unit";
 
 const phrases = [
   "老板少骂我一次",
@@ -511,6 +512,8 @@ export function GongdeClicker() {
         </article>
 
       </section>
+
+      <AdsenseUnit slot="5762213705" />
     </main>
   );
 }

@@ -1,3 +1,5 @@
+import { AdsenseUnit } from "../../components/adsense-unit";
+
 export const metadata = {
   title: "在线电子木鱼 FAQ - 功德敲敲 Gongde Clicker",
   description:
@@ -79,6 +81,8 @@ export default function FaqPage() {
           ))}
         </div>
       </section>
+
+      <AdsenseUnit slot="5762213705" />
     </main>
   );
 }
