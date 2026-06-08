@@ -30,6 +30,10 @@ import { renderWishCardToDataUrl } from "../lib/wish-card";
 import { AdsenseUnit } from "./adsense-unit";
 import { WoodenFish } from "./wooden-fish";
 
+const SHARE_TITLE = "赛博木鱼 Cyber Muyu";
+const SHARE_URL =
+  "https://gongdeclicker.com/?utm_source=share&utm_medium=web_share&utm_campaign=wish_card";
+
 // 敲击火花的迸射方向（六向），由 CSS 用 --sx/--sy 驱动飞出。
 const sparkVectors = [
   { x: 0, y: -36 },
@@ -327,7 +331,13 @@ export function GongdeClicker() {
 
   const generateWishCard = useCallback(() => {
     try {
-      const dataUrl = renderWishCardToDataUrl(stats, dailyFortune, activeWish);
+      const dataUrl = renderWishCardToDataUrl(
+        stats,
+        dailyFortune,
+        activeWish,
+        document,
+        streak.current,
+      );
       const link = document.createElement("a");
 
       link.download = "gongde-wish-card.png";
@@ -339,7 +349,49 @@ export function GongdeClicker() {
     } catch {
       showShareStatus("当前浏览器暂不支持保存图片");
     }
-  }, [activeWish, dailyFortune, showShareStatus, stats]);
+  }, [activeWish, dailyFortune, showShareStatus, stats, streak.current]);
+
+  const shareWish = useCallback(async () => {
+    const text = getWishShareText(stats, dailyFortune, activeWish);
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      let payload = { title: SHARE_TITLE, text, url: SHARE_URL };
+
+      // 优先把功德图作为文件分享，唤起系统面板里的"分享图片"
+      try {
+        const dataUrl = renderWishCardToDataUrl(
+          stats,
+          dailyFortune,
+          activeWish,
+          document,
+          streak.current,
+        );
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], "gongde-wish-card.png", {
+          type: "image/png",
+        });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          payload = { title: SHARE_TITLE, text, files: [file] };
+        }
+      } catch {
+        // 生成图失败则退回纯文本分享
+      }
+
+      try {
+        await navigator.share(payload);
+        showShareStatus("已唤起分享");
+        return;
+      } catch (error) {
+        if (error && error.name === "AbortError") {
+          return; // 用户主动取消，不再兜底
+        }
+        // 其它失败 → 落到剪贴板兜底
+      }
+    }
+
+    await copyShareText();
+  }, [activeWish, copyShareText, dailyFortune, showShareStatus, stats, streak.current]);
 
   const strike = useCallback((source = "click") => {
     comboRef.current += 1;
@@ -566,8 +618,8 @@ export function GongdeClicker() {
               </button>
             </div>
           </div>
-          <button className="share-button" onClick={copyShareText} type="button">
-            复制分享文案
+          <button className="share-button" onClick={shareWish} type="button">
+            分享我的功德
           </button>
           <button
             className="share-button share-button-secondary"
