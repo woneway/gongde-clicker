@@ -1,7 +1,7 @@
 export const metadata = {
-  title: "联系功德敲敲 Gongde Clicker",
+  title: "联系赛博木鱼 Cyber Muyu",
   description:
-    "联系功德敲敲 Gongde Clicker，反馈在线电子木鱼页面问题、提出建议或沟通合作。",
+    "联系赛博木鱼 Cyber Muyu，反馈在线电子木鱼页面问题、提出建议或沟通合作。",
   alternates: {
     canonical: "https://gongdeclicker.com/contact",
   },

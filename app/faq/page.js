@@ -1,9 +1,9 @@
 import { AdsenseUnit } from "../../components/adsense-unit";
 
 export const metadata = {
-  title: "在线电子木鱼 FAQ - 功德敲敲 Gongde Clicker",
+  title: "在线电子木鱼 FAQ - 赛博木鱼 Cyber Muyu",
   description:
-    "了解功德敲敲 Gongde Clicker 在线电子木鱼的计数、隐私、键盘操作、免费使用和使用边界。",
+    "了解赛博木鱼 Cyber Muyu 在线电子木鱼的计数、隐私、键盘操作、免费使用和使用边界。",
   alternates: {
     canonical: "https://gongdeclicker.com/faq",
   },
@@ -11,14 +11,14 @@ export const metadata = {
 
 const faqs = [
   {
-    question: "Gongde Clicker 是什么？",
+    question: "赛博木鱼 Cyber Muyu 是什么？",
     answer:
-      "它是一个轻量的在线电子木鱼工具。你可以点击木鱼或按空格键，给今天加一点玩笑式的功德计数，用来放松、转移注意力或给工作间隙一个小仪式。",
+      "它是一个轻量的在线电子木鱼工具。你可以点击木鱼或按空格键，给今天加一点玩笑式的功德计数（功德 +1），用来放松、转移注意力或给工作间隙一个小仪式。",
   },
   {
-    question: "功德敲敲和 Gongde Clicker 是同一个网站吗？",
+    question: "赛博木鱼和 Gongde Clicker（功德敲敲）是同一个网站吗？",
     answer:
-      "是的。功德敲敲就是 Gongde Clicker，gongdeclicker.com 是这个在线电子木鱼工具的官方网址。",
+      "是的。赛博木鱼 Cyber Muyu 就是过去的功德敲敲 / Gongde Clicker，gongdeclicker.com 是这个在线电子木鱼工具的官方网址。",
   },
   {
     question: "这个网站收费吗？",
@@ -43,7 +43,7 @@ const faqs = [
   {
     question: "这是宗教服务吗？",
     answer:
-      "不是。功德敲敲是一个带有中文互联网幽默感的解压小工具，不提供宗教指导，也不代表真实功德、修行成果或任何精神承诺。",
+      "不是。赛博木鱼是一个带有中文互联网幽默感的解压小工具，不提供宗教指导，也不代表真实功德、修行成果或任何精神承诺。",
   },
 ];
 

@@ -1,9 +1,9 @@
 import { AdsenseUnit } from "../../components/adsense-unit";
 
 export const metadata = {
-  title: "关于功德敲敲 Gongde Clicker - 在线电子木鱼解压工具",
+  title: "关于赛博木鱼 Cyber Muyu - 在线电子木鱼解压工具",
   description:
-    "了解功德敲敲 Gongde Clicker 这个在线电子木鱼、功德点击器和上班摸鱼解压工具的用途、设计原则和使用边界。",
+    "了解赛博木鱼 Cyber Muyu 这个在线电子木鱼、功德点击器和上班摸鱼解压工具的用途、设计原则和使用边界。",
   alternates: {
     canonical: "https://gongdeclicker.com/about",
   },
@@ -14,9 +14,9 @@ export default function AboutPage() {
     <main className="info-page">
       <section className="info-panel">
         <p className="eyebrow">About</p>
-        <h1>关于功德敲敲</h1>
+        <h1>关于赛博木鱼</h1>
         <p>
-          Gongde Clicker / 功德敲敲 是一个在线电子木鱼解压工具。打开网页，
+          Cyber Muyu / 赛博木鱼 是一个在线电子木鱼解压工具。打开网页，
           点击木鱼或按空格键，就能给今天的精神状态加一点功德。
         </p>
         <p>

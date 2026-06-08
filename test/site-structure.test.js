@@ -62,8 +62,8 @@ test("home page exposes search-friendly copy for core queries", () => {
 
 test("root layout describes the product with WebApplication structured data", () => {
   assert.match(layout, /"@type": "WebApplication"/);
-  assert.match(layout, /"name": "功德敲敲"/);
-  assert.match(layout, /"alternateName": "Gongde Clicker"/);
+  assert.match(layout, /"name": "赛博木鱼"/);
+  assert.match(layout, /"alternateName": "Cyber Muyu"/);
   assert.match(layout, /"applicationCategory": "EntertainmentApplication"/);
 });
 
@@ -81,13 +81,13 @@ test("sitemap lastmod reflects the latest SEO update", () => {
 
 test("site footer binds the Chinese brand to the domain", () => {
   assert.match(layout, /brand-binding/);
-  assert.match(layout, /功德敲敲 Gongde Clicker 是 gongdeclicker\.com 的在线电子木鱼工具/);
+  assert.match(layout, /赛博木鱼 Cyber Muyu 是 gongdeclicker\.com 的在线电子木鱼工具/);
 });
 
 test("FAQ explains the Chinese and English brand names refer to the same site", () => {
   const faqPage = readFileSync(new URL("../app/faq/page.js", import.meta.url), "utf8");
 
-  assert.match(faqPage, /功德敲敲和 Gongde Clicker 是同一个网站吗/);
-  assert.match(faqPage, /功德敲敲就是 Gongde Clicker/);
+  assert.match(faqPage, /赛博木鱼和 Gongde Clicker（功德敲敲）是同一个网站吗/);
+  assert.match(faqPage, /赛博木鱼 Cyber Muyu 就是过去的功德敲敲/);
   assert.match(faqPage, /gongdeclicker\.com/);
 });

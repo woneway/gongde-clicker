@@ -16,17 +16,26 @@ import {
   getTodayKey,
 } from "../lib/gongde-storage";
 import {
-  getActiveWish,
   getAchievementProgress,
   getAchievements,
   getDailyFortune,
+  getDefaultWish,
   getNextDefaultWish,
+  getStoredWish,
   getWishShareText,
   normalizeWish,
   saveWish,
 } from "../lib/gongde-growth";
 import { getStreakInfo, recordActiveDay } from "../lib/gongde-streak";
 import { renderWishCardToDataUrl } from "../lib/wish-card";
+import {
+  DEFAULT_LANG,
+  LANGUAGES,
+  detectLanguage,
+  normalizeLang,
+  readStoredLanguage,
+  saveLanguage,
+} from "../lib/i18n";
 import { AdsenseUnit } from "./adsense-unit";
 import { WoodenFish } from "./wooden-fish";
 
@@ -44,28 +53,136 @@ const sparkVectors = [
   { x: -32, y: -18 },
 ];
 
-const phrases = [
-  "老板少骂我一次",
-  "bug 自动消失",
-  "甲方已读不回",
-  "周报自动生成",
-  "需求不再变更",
-  "KPI 轻轻放过我",
-  "今天不加班",
-  "会议自动取消",
-  "代码一次过审",
-  "外卖提前送达",
-  "消息不用秒回",
-  "日报自己会写",
-];
+const phrasesByLang = {
+  zh: [
+    "老板少骂我一次",
+    "bug 自动消失",
+    "甲方已读不回",
+    "周报自动生成",
+    "需求不再变更",
+    "KPI 轻轻放过我",
+    "今天不加班",
+    "会议自动取消",
+    "代码一次过审",
+    "外卖提前送达",
+    "消息不用秒回",
+    "日报自己会写",
+  ],
+  en: [
+    "boss yells one less time",
+    "bugs vanish on their own",
+    "client stops ghosting",
+    "weekly report writes itself",
+    "no more spec changes",
+    "KPIs go easy on me",
+    "no overtime today",
+    "meeting gets cancelled",
+    "code passes review",
+    "lunch arrives early",
+    "no need to reply instantly",
+    "the daily report self-writes",
+  ],
+};
 
-const ritualPrompts = [
-  "敲三下，先把心态放平。",
-  "等构建时敲一敲，别盯进度条。",
-  "开会前先清空一点杂念。",
-  "写完一段代码，给自己补一点功德。",
-  "消息太多时，先敲一下再回复。",
-];
+const ritualPromptsByLang = {
+  zh: [
+    "敲三下，先把心态放平。",
+    "等构建时敲一敲，别盯进度条。",
+    "开会前先清空一点杂念。",
+    "写完一段代码，给自己补一点功德。",
+    "消息太多时，先敲一下再回复。",
+  ],
+  en: [
+    "Tap thrice and let your mind settle.",
+    "Tap while it builds — stop staring at the bar.",
+    "Clear your head before the meeting.",
+    "Finished a chunk of code? Earn some merit.",
+    "Too many pings? Tap once, then reply.",
+  ],
+};
+
+const BLESSING_PREFIX = { zh: "正在加持：", en: "Blessing: " };
+
+const ui = {
+  zh: {
+    statToday: "今日功德",
+    statTotal: "累计功德",
+    statBest: "最高连击",
+    streakPre: "连续修行",
+    streakSuf: "天",
+    bestPre: "最长",
+    bestSuf: "天",
+    fishAria: "敲木鱼，功德加一",
+    comboHint: "点击木鱼或按空格键",
+    comboPre: "连击 x",
+    nextStage: "下一阶段",
+    progressAria: (n) => `距离下一阶段还差 ${n} 点功德`,
+    seoKicker: "在线电子木鱼",
+    seoTitle: "赛博木鱼 Cyber Muyu",
+    seoBody:
+      "赛博木鱼（Cyber Muyu）是一个免费的在线电子木鱼和木鱼模拟器。打开网页就能点击木鱼、按空格敲击、记录今日功德和累计功德，适合上班摸鱼解压、学习休息、等待构建或开会前放松一下。",
+    fortuneKicker: "今日功德签",
+    doLabel: "宜：",
+    avoidLabel: "忌：",
+    wishLabel: "今日愿望",
+    wishPlaceholder: "愿今天不临时拉会",
+    wishHint: "愿望仅保存在本机，请勿填写隐私信息。",
+    rotateBtn: "换一个",
+    shareBtn: "分享我的功德",
+    saveBtn: "保存愿望功德图",
+    shareIdle: "分享给需要一点功德的朋友",
+    manualLabel: "手动复制文案",
+    achievementsKicker: "成就",
+    allDoneHint: "可以继续敲一张更好看的分享图",
+    badgeUnlocked: "已解锁",
+    badgeLocked: "未解锁",
+    msgCopied: "已复制分享文案",
+    msgCopyFail: "复制失败，请手动复制文案",
+    msgRotated: "已换一个愿望",
+    msgSaved: "图片已生成，已开始保存",
+    msgSaveFail: "当前浏览器暂不支持保存图片",
+    msgShared: "已唤起分享",
+  },
+  en: {
+    statToday: "Today",
+    statTotal: "Total",
+    statBest: "Best Combo",
+    streakPre: "Streak",
+    streakSuf: "days",
+    bestPre: "Best",
+    bestSuf: "days",
+    fishAria: "Tap the wooden fish, +1 merit",
+    comboHint: "Tap the fish or press space",
+    comboPre: "Combo x",
+    nextStage: "Next stage",
+    progressAria: (n) => `${n} merit to the next stage`,
+    seoKicker: "Online Wooden Fish",
+    seoTitle: "Cyber Muyu",
+    seoBody:
+      "Cyber Muyu is a free online wooden fish (muyu) and merit clicker. Open the page, tap the fish or press space, and track today's and total merit — perfect for a quick break at work, between study sessions, or while a build runs.",
+    fortuneKicker: "Today's Fortune",
+    doLabel: "Do: ",
+    avoidLabel: "Avoid: ",
+    wishLabel: "Today's Wish",
+    wishPlaceholder: "May no surprise meetings",
+    wishHint: "Saved on your device only — keep it non-sensitive.",
+    rotateBtn: "Shuffle",
+    shareBtn: "Share my merit",
+    saveBtn: "Save merit card",
+    shareIdle: "Share some merit with a friend",
+    manualLabel: "Copy manually",
+    achievementsKicker: "Badges",
+    allDoneHint: "Keep tapping for a nicer share card",
+    badgeUnlocked: "Unlocked",
+    badgeLocked: "Locked",
+    msgCopied: "Copied share text",
+    msgCopyFail: "Copy failed — please copy manually",
+    msgRotated: "Shuffled a new wish",
+    msgSaved: "Image ready, saving now",
+    msgSaveFail: "This browser can't save the image",
+    msgShared: "Share sheet opened",
+  },
+};
 
 const defaultStats = {
   today: 0,
@@ -130,7 +247,7 @@ function getWishSnapshot() {
     return "";
   }
 
-  return getActiveWish(window.localStorage, getTodayKey());
+  return getStoredWish(window.localStorage, getTodayKey());
 }
 
 function emitWishChange() {
@@ -220,6 +337,8 @@ function playWoodenFishSound(audioRef) {
 }
 
 export function GongdeClicker() {
+  const [lang, setLang] = useState(DEFAULT_LANG);
+  const [mounted, setMounted] = useState(false);
   const [combo, setCombo] = useState(0);
   const [hitState, setHitState] = useState(false);
   const [floaters, setFloaters] = useState([]);
@@ -240,7 +359,7 @@ export function GongdeClicker() {
       () => JSON.stringify(defaultStats),
     ),
   );
-  const activeWish = useSyncExternalStore(subscribeToWish, getWishSnapshot, () => "");
+  const savedWish = useSyncExternalStore(subscribeToWish, getWishSnapshot, () => "");
   const streak = JSON.parse(
     useSyncExternalStore(
       subscribeToStreak,
@@ -248,6 +367,24 @@ export function GongdeClicker() {
       () => JSON.stringify(defaultStreak),
     ),
   );
+
+  const t = ui[lang];
+
+  // 挂载后再读取语言偏好，保证 SSR 与首帧 hydration 都是默认中文，避免不匹配。
+  useEffect(() => {
+    setMounted(true);
+    const detected = detectLanguage(
+      readStoredLanguage(window.localStorage),
+      window.navigator?.language,
+    );
+    setLang(detected);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+    }
+  }, [lang, mounted]);
 
   useEffect(() => {
     return () => {
@@ -265,7 +402,14 @@ export function GongdeClicker() {
     };
   }, []);
 
-  const gongdeLevel = useMemo(() => getGongdeLevel(stats.total), [stats.total]);
+  // 已保存愿望优先；没有则按当前语言给默认愿望（挂载后才取默认，避免日期相关的 hydration 不匹配）。
+  const activeWish =
+    savedWish || (mounted ? getDefaultWish(getTodayKey(), lang) : "");
+
+  const gongdeLevel = useMemo(
+    () => getGongdeLevel(stats.total, lang),
+    [stats.total, lang],
+  );
   const nextMilestone = useMemo(
     () => getNextMilestone(stats.total),
     [stats.total],
@@ -274,20 +418,30 @@ export function GongdeClicker() {
     100,
     Math.round((stats.total / nextMilestone) * 100),
   );
+  const ritualPrompts = ritualPromptsByLang[lang];
   const ritualPrompt = ritualPrompts[stats.today % ritualPrompts.length];
-  const dailyFortune = useMemo(() => getDailyFortune(stats.date), [stats.date]);
+  const dailyFortune = useMemo(
+    () => getDailyFortune(stats.date, lang),
+    [stats.date, lang],
+  );
   const statsWithStreak = useMemo(
     () => ({ ...stats, streak: streak.current }),
     [stats, streak.current],
   );
   const achievements = useMemo(
-    () => getAchievements(statsWithStreak),
-    [statsWithStreak],
+    () => getAchievements(statsWithStreak, lang),
+    [statsWithStreak, lang],
   );
   const achievementProgress = useMemo(
-    () => getAchievementProgress(statsWithStreak),
-    [statsWithStreak],
+    () => getAchievementProgress(statsWithStreak, lang),
+    [statsWithStreak, lang],
   );
+
+  const changeLang = useCallback((next) => {
+    const normalized = normalizeLang(next);
+    setLang(normalized);
+    saveLanguage(window.localStorage, normalized);
+  }, []);
 
   const showShareStatus = useCallback((message) => {
     if (shareStatusTimer.current) {
@@ -302,32 +456,32 @@ export function GongdeClicker() {
   }, []);
 
   const copyShareText = useCallback(async () => {
-    const text = getWishShareText(stats, dailyFortune, activeWish);
+    const text = getWishShareText(stats, dailyFortune, activeWish, lang);
 
     try {
       await navigator.clipboard.writeText(text);
       setManualShareText("");
-      showShareStatus("已复制分享文案");
+      showShareStatus(t.msgCopied);
     } catch {
       setManualShareText(text);
-      showShareStatus("复制失败，请手动复制文案");
+      showShareStatus(t.msgCopyFail);
     }
-  }, [activeWish, dailyFortune, showShareStatus, stats]);
+  }, [activeWish, dailyFortune, lang, showShareStatus, stats, t]);
 
   const updateWish = useCallback(
     (value) => {
       const normalized = normalizeWish(value);
-      saveWish(window.localStorage, stats.date, normalized);
+      saveWish(window.localStorage, stats.date, normalized, lang);
       emitWishChange();
     },
-    [stats.date],
+    [lang, stats.date],
   );
 
   const rotateWish = useCallback(() => {
-    const nextWish = getNextDefaultWish(stats.date, activeWish);
+    const nextWish = getNextDefaultWish(stats.date, activeWish, lang);
     updateWish(nextWish);
-    showShareStatus("已换一个愿望");
-  }, [activeWish, showShareStatus, stats.date, updateWish]);
+    showShareStatus(t.msgRotated);
+  }, [activeWish, lang, showShareStatus, stats.date, t, updateWish]);
 
   const generateWishCard = useCallback(() => {
     try {
@@ -345,14 +499,14 @@ export function GongdeClicker() {
       document.body.append(link);
       link.click();
       link.remove();
-      showShareStatus("图片已生成，已开始保存");
+      showShareStatus(t.msgSaved);
     } catch {
-      showShareStatus("当前浏览器暂不支持保存图片");
+      showShareStatus(t.msgSaveFail);
     }
-  }, [activeWish, dailyFortune, showShareStatus, stats, streak.current]);
+  }, [activeWish, dailyFortune, showShareStatus, stats, streak.current, t]);
 
   const shareWish = useCallback(async () => {
-    const text = getWishShareText(stats, dailyFortune, activeWish);
+    const text = getWishShareText(stats, dailyFortune, activeWish, lang);
 
     if (typeof navigator !== "undefined" && navigator.share) {
       let payload = { title: SHARE_TITLE, text, url: SHARE_URL };
@@ -380,7 +534,7 @@ export function GongdeClicker() {
 
       try {
         await navigator.share(payload);
-        showShareStatus("已唤起分享");
+        showShareStatus(t.msgShared);
         return;
       } catch (error) {
         if (error && error.name === "AbortError") {
@@ -391,71 +545,78 @@ export function GongdeClicker() {
     }
 
     await copyShareText();
-  }, [activeWish, copyShareText, dailyFortune, showShareStatus, stats, streak.current]);
+  }, [activeWish, copyShareText, dailyFortune, lang, showShareStatus, stats, streak.current, t]);
 
-  const strike = useCallback((source = "click") => {
-    comboRef.current += 1;
-    const nextCombo = comboRef.current;
-    const nextStats = addMerit(window.localStorage, getTodayKey(), nextCombo);
-    const nextLevel = getGongdeLevel(nextStats.total);
-    const phrase =
-      activeWish && Math.random() > 0.45
-        ? `正在加持：${activeWish}`
-        : phrases[Math.floor(Math.random() * phrases.length)];
-    const id = floaterId.current + 1;
+  const strike = useCallback(
+    (source = "click") => {
+      comboRef.current += 1;
+      const nextCombo = comboRef.current;
+      const nextStats = addMerit(window.localStorage, getTodayKey(), nextCombo);
+      const phrases = phrasesByLang[lang];
+      const phrase =
+        activeWish && Math.random() > 0.45
+          ? `${BLESSING_PREFIX[lang]}${activeWish}`
+          : phrases[Math.floor(Math.random() * phrases.length)];
+      const id = floaterId.current + 1;
 
-    floaterId.current = id;
-    emitStatsChange();
-    recordActiveDay(window.localStorage, getTodayKey());
-    emitStreakChange();
-    if (shouldReportAnalytics()) {
-      track("gongde_click", {
-        source,
-        level: nextLevel.key,
-        level_label: nextLevel.label,
-        total_range: nextLevel.range,
-      });
-    }
-    setCombo(nextCombo);
-    setHitState(true);
-    setProgressPulse(true);
-    setFloaters((items) => [
-      ...items.slice(-6),
-      {
-        id,
-        text: phrase,
-        x: 34 + Math.random() * 32,
-        drift: Math.random() > 0.5 ? "left" : "right",
-      },
-    ]);
-    setPops((items) => [...items.slice(-4), { id }]);
+      floaterId.current = id;
+      emitStatsChange();
+      recordActiveDay(window.localStorage, getTodayKey());
+      emitStreakChange();
+      if (shouldReportAnalytics()) {
+        const levelForTrack = getGongdeLevel(nextStats.total, "zh");
+        track("gongde_click", {
+          source,
+          level: levelForTrack.key,
+          level_label: levelForTrack.label,
+          total_range: levelForTrack.range,
+        });
+      }
+      setCombo(nextCombo);
+      setHitState(true);
+      setProgressPulse(true);
+      setFloaters((items) => [
+        ...items.slice(-6),
+        {
+          id,
+          text: phrase,
+          x: 34 + Math.random() * 32,
+          drift: Math.random() > 0.5 ? "left" : "right",
+        },
+      ]);
+      setPops((items) => [...items.slice(-4), { id }]);
 
-    playWoodenFishSound(audioRef);
+      playWoodenFishSound(audioRef);
 
-    if (navigator.vibrate) {
-      navigator.vibrate(18);
-    }
+      if (navigator.vibrate) {
+        navigator.vibrate(18);
+      }
 
-    window.setTimeout(() => setHitState(false), 120);
-    if (progressTimer.current) {
-      window.clearTimeout(progressTimer.current);
-    }
-    progressTimer.current = window.setTimeout(() => setProgressPulse(false), 520);
-    window.setTimeout(() => {
-      setFloaters((items) => items.filter((item) => item.id !== id));
-    }, 1100);
-    window.setTimeout(() => {
-      setPops((items) => items.filter((item) => item.id !== id));
-    }, 780);
+      window.setTimeout(() => setHitState(false), 120);
+      if (progressTimer.current) {
+        window.clearTimeout(progressTimer.current);
+      }
+      progressTimer.current = window.setTimeout(
+        () => setProgressPulse(false),
+        520,
+      );
+      window.setTimeout(() => {
+        setFloaters((items) => items.filter((item) => item.id !== id));
+      }, 1100);
+      window.setTimeout(() => {
+        setPops((items) => items.filter((item) => item.id !== id));
+      }, 780);
 
-    if (comboTimer.current) {
-      window.clearTimeout(comboTimer.current);
-    }
-    comboTimer.current = window.setTimeout(() => {
-      comboRef.current = 0;
-      setCombo(0);
-    }, 1400);
-  }, [activeWish]);
+      if (comboTimer.current) {
+        window.clearTimeout(comboTimer.current);
+      }
+      comboTimer.current = window.setTimeout(() => {
+        comboRef.current = 0;
+        setCombo(0);
+      }, 1400);
+    },
+    [activeWish, lang],
+  );
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -482,17 +643,31 @@ export function GongdeClicker() {
 
   return (
     <main className="clicker-page">
+      <div className="lang-switch" role="group" aria-label="Language">
+        {LANGUAGES.map((item) => (
+          <button
+            className={`lang-option ${lang === item.code ? "is-active" : ""}`}
+            key={item.code}
+            onClick={() => changeLang(item.code)}
+            type="button"
+            aria-pressed={lang === item.code}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <section className="score-strip" aria-label="功德统计">
         <div>
-          <span>今日功德</span>
+          <span>{t.statToday}</span>
           <strong>{stats.today}</strong>
         </div>
         <div>
-          <span>累计功德</span>
+          <span>{t.statTotal}</span>
           <strong>{stats.total}</strong>
         </div>
         <div>
-          <span>最高连击</span>
+          <span>{t.statBest}</span>
           <strong>{stats.bestCombo}</strong>
         </div>
       </section>
@@ -503,9 +678,11 @@ export function GongdeClicker() {
             🔥
           </span>
           <span className="streak-count">
-            连续修行 <strong>{streak.current}</strong> 天
+            {t.streakPre} <strong>{streak.current}</strong> {t.streakSuf}
           </span>
-          <span className="streak-best">最长 {streak.longest} 天</span>
+          <span className="streak-best">
+            {t.bestPre} {streak.longest} {t.bestSuf}
+          </span>
         </div>
         <ol className="streak-dots" aria-hidden="true">
           {streak.last7.map((slot) => (
@@ -539,7 +716,7 @@ export function GongdeClicker() {
           className={`wooden-fish ${hitState ? "is-hit" : ""}`}
           onClick={() => strike("click")}
           type="button"
-          aria-label="敲木鱼，功德加一"
+          aria-label={t.fishAria}
         >
           <WoodenFish isHit={hitState} />
           <span className="merit-layer" aria-hidden="true">
@@ -561,17 +738,14 @@ export function GongdeClicker() {
           className={`combo-line ${combo >= 3 ? "is-combo-hot" : ""}`}
           aria-live="polite"
         >
-          {combo > 1 ? `连击 x${combo}` : "点击木鱼或按空格键"}
+          {combo > 1 ? `${t.comboPre}${combo}` : t.comboHint}
         </div>
         <div
           className={`progress-card ${progressPulse ? "is-pulsing" : ""}`}
-          aria-label={`距离下一阶段还差 ${Math.max(
-            nextMilestone - stats.total,
-            0,
-          )} 点功德`}
+          aria-label={t.progressAria(Math.max(nextMilestone - stats.total, 0))}
         >
           <div className="progress-copy">
-            <span>下一阶段</span>
+            <span>{t.nextStage}</span>
             <strong>
               {stats.total}/{nextMilestone}
             </strong>
@@ -583,60 +757,62 @@ export function GongdeClicker() {
       </section>
 
       <section className="seo-summary" aria-labelledby="seo-summary-title">
-        <p className="section-kicker">在线电子木鱼</p>
-        <h1 id="seo-summary-title">功德敲敲 Gongde Clicker</h1>
-        <p>
-          功德敲敲是一个免费的在线电子木鱼和木鱼模拟器。打开网页就能点击木鱼、
-          按空格敲击、记录今日功德和累计功德，适合上班摸鱼解压、学习休息、
-          等待构建或开会前放松一下。
-        </p>
+        <p className="section-kicker">{t.seoKicker}</p>
+        <h1 id="seo-summary-title">{t.seoTitle}</h1>
+        <p>{t.seoBody}</p>
       </section>
 
       <section className="growth-panel" aria-label="每日功德签和成就">
         <article className="fortune-card">
-          <span className="section-kicker">今日功德签</span>
+          <span className="section-kicker">{t.fortuneKicker}</span>
           <h2>{dailyFortune.title}</h2>
           <p>{dailyFortune.text}</p>
           <div className="fortune-pair">
-            <span>宜：{dailyFortune.good}</span>
-            <span>忌：{dailyFortune.avoid}</span>
+            <span>
+              {t.doLabel}
+              {dailyFortune.good}
+            </span>
+            <span>
+              {t.avoidLabel}
+              {dailyFortune.avoid}
+            </span>
           </div>
           <div className="wish-box">
-            <label htmlFor="daily-wish">今日愿望</label>
+            <label htmlFor="daily-wish">{t.wishLabel}</label>
             <input
               id="daily-wish"
               maxLength={40}
               onChange={(event) => updateWish(event.target.value)}
-              placeholder="愿今天不临时拉会"
+              placeholder={t.wishPlaceholder}
               type="text"
               value={activeWish}
             />
             <div className="wish-tools">
-              <small>愿望仅保存在本机，请勿填写隐私信息。</small>
+              <small>{t.wishHint}</small>
               <button onClick={rotateWish} type="button">
-                换一个
+                {t.rotateBtn}
               </button>
             </div>
           </div>
           <button className="share-button" onClick={shareWish} type="button">
-            分享我的功德
+            {t.shareBtn}
           </button>
           <button
             className="share-button share-button-secondary"
             onClick={generateWishCard}
             type="button"
           >
-            保存愿望功德图
+            {t.saveBtn}
           </button>
           <small
             className={`share-status ${shareStatus ? "has-feedback" : ""}`}
             aria-live="polite"
           >
-            {shareStatus || "分享给需要一点功德的朋友"}
+            {shareStatus || t.shareIdle}
           </small>
           {manualShareText && (
             <label className="manual-share-box">
-              <span>手动复制文案</span>
+              <span>{t.manualLabel}</span>
               <textarea readOnly value={manualShareText} />
             </label>
           )}
@@ -644,7 +820,7 @@ export function GongdeClicker() {
 
         <article className="achievement-card">
           <div className="achievement-heading">
-            <span className="section-kicker">成就</span>
+            <span className="section-kicker">{t.achievementsKicker}</span>
             <strong>{achievementProgress.summary}</strong>
           </div>
           <div className="achievement-progress">
@@ -652,7 +828,7 @@ export function GongdeClicker() {
             <span>
               {achievementProgress.nextAchievement
                 ? achievementProgress.nextAchievement.condition
-                : "可以继续敲一张更好看的分享图"}
+                : t.allDoneHint}
             </span>
           </div>
           <div className="badge-grid">
@@ -667,13 +843,12 @@ export function GongdeClicker() {
                 <strong>{item.name}</strong>
                 <small>{item.condition}</small>
                 <span className="badge-state">
-                  {item.unlocked ? "已解锁" : "未解锁"}
+                  {item.unlocked ? t.badgeUnlocked : t.badgeLocked}
                 </span>
               </div>
             ))}
           </div>
         </article>
-
       </section>
 
       <AdsenseUnit slot="5762213705" />

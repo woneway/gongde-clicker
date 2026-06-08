@@ -1,7 +1,7 @@
 export const metadata = {
-  title: "隐私政策 - 功德敲敲 Gongde Clicker",
+  title: "隐私政策 - 赛博木鱼 Cyber Muyu",
   description:
-    "了解功德敲敲 Gongde Clicker 在线电子木鱼如何使用 localStorage、匿名统计和未来可能接入的第三方广告服务。",
+    "了解赛博木鱼 Cyber Muyu 在线电子木鱼如何使用 localStorage、匿名统计和未来可能接入的第三方广告服务。",
   alternates: {
     canonical: "https://gongdeclicker.com/privacy",
   },
@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <section className="info-panel">
         <p className="eyebrow">Privacy</p>
         <h1>隐私政策</h1>
-        <p>功德敲敲不提供账号系统，不需要登录，也不会主动收集你的个人身份信息。</p>
+        <p>赛博木鱼不提供账号系统，不需要登录，也不会主动收集你的个人身份信息。</p>
         <p>
           网站会使用浏览器 localStorage 保存今日功德、累计功德和最高连击，用于在同一设备上保留你的计数。
           这些数据保存在你的设备浏览器中，不会因为你访问网站而自动上传到我们的服务器。

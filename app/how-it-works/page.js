@@ -1,9 +1,9 @@
 import { AdsenseUnit } from "../../components/adsense-unit";
 
 export const metadata = {
-  title: "在线电子木鱼玩法说明 - 功德敲敲 Gongde Clicker",
+  title: "在线电子木鱼玩法说明 - 赛博木鱼 Cyber Muyu",
   description:
-    "了解功德敲敲 Gongde Clicker 在线电子木鱼如何计数、保存数据、播放声音、支持空格键敲击和每日重置。",
+    "了解赛博木鱼 Cyber Muyu 在线电子木鱼如何计数、保存数据、播放声音、支持空格键敲击和每日重置。",
   alternates: {
     canonical: "https://gongdeclicker.com/how-it-works",
   },
@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
         <p className="eyebrow">How it works</p>
         <h1>玩法说明</h1>
         <p>
-          Gongde Clicker 的核心很简单：给一个日常的小动作配上即时反馈，
+          Cyber Muyu 的核心很简单：给一个日常的小动作配上即时反馈，
           让休息、摸鱼或切换状态时多一点轻松感。
         </p>
         <div className="step-list">

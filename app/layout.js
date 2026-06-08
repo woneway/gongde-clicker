@@ -5,10 +5,12 @@ import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
   metadataBase: new URL("https://gongdeclicker.com/"),
-  title: "功德敲敲 Gongde Clicker - 在线电子木鱼功德点击器",
+  title: "赛博木鱼 Cyber Muyu - 在线电子木鱼功德点击器",
   description:
-    "功德敲敲 Gongde Clicker 是免费的在线电子木鱼和木鱼模拟器，适合上班摸鱼、学习间隙和日常解压。",
+    "赛博木鱼 Cyber Muyu 是免费的在线电子木鱼和木鱼模拟器，点一下功德 +1，适合上班摸鱼、学习间隙和日常解压。",
   keywords: [
+    "赛博木鱼",
+    "Cyber Muyu",
     "功德敲敲",
     "Gongde Clicker",
     "在线木鱼",
@@ -24,26 +26,35 @@ export const metadata = {
     canonical: "https://gongdeclicker.com/",
   },
   openGraph: {
-    title: "功德敲敲 Gongde Clicker - 在线电子木鱼",
+    title: "赛博木鱼 Cyber Muyu - 在线电子木鱼",
     description:
       "打开网页，点击木鱼或按空格键，使用免费的在线电子木鱼给今天加一点功德。",
     url: "https://gongdeclicker.com/",
-    siteName: "功德敲敲",
+    siteName: "赛博木鱼",
     locale: "zh_CN",
     type: "website",
+    images: [
+      {
+        url: "https://gongdeclicker.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "赛博木鱼 Cyber Muyu - 在线电子木鱼",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
-    title: "功德敲敲 Gongde Clicker - 在线电子木鱼",
+    card: "summary_large_image",
+    title: "赛博木鱼 Cyber Muyu - 在线电子木鱼",
     description: "在线电子木鱼解压工具，点击一下，功德 +1。",
+    images: ["https://gongdeclicker.com/og-image.png"],
   },
 };
 
 const webApplicationJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "功德敲敲",
-  "alternateName": "Gongde Clicker",
+  "name": "赛博木鱼",
+  "alternateName": "Cyber Muyu",
   "url": "https://gongdeclicker.com/",
   "applicationCategory": "EntertainmentApplication",
   "operatingSystem": "Any",
@@ -60,7 +71,7 @@ const breadcrumbJsonLd = {
     {
       "@type": "ListItem",
       "position": 1,
-      "name": "功德敲敲",
+      "name": "赛博木鱼",
       "item": "https://gongdeclicker.com/",
     },
   ],
@@ -86,10 +97,10 @@ export default function RootLayout({ children }) {
       <body>
         <header className="site-header">
           <Link className="brand" href="/">
-            <span className="brand-mark">功</span>
+            <span className="brand-mark">鱼</span>
             <span>
-              <strong>功德敲敲</strong>
-              <small>Gongde Clicker</small>
+              <strong>赛博木鱼</strong>
+              <small>Cyber Muyu</small>
             </span>
           </Link>
           <nav className="site-nav" aria-label="主导航">
@@ -103,12 +114,12 @@ export default function RootLayout({ children }) {
         {children}
         <footer className="site-footer">
           <p className="brand-binding">
-            功德敲敲 Gongde Clicker 是 gongdeclicker.com 的在线电子木鱼工具。
+            赛博木鱼 Cyber Muyu 是 gongdeclicker.com 的在线电子木鱼工具。
           </p>
           <p>
             <Link href="/">gongdeclicker.com</Link>
             <span aria-hidden="true"> · </span>
-            <Link href="/about">关于功德敲敲</Link>
+            <Link href="/about">关于赛博木鱼</Link>
             <span aria-hidden="true"> · </span>
             <Link href="/faq">FAQ</Link>
           </p>
