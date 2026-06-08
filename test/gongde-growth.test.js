@@ -65,23 +65,24 @@ test("getAchievementProgress summarizes unlocked badges and next target", () => 
   });
 
   assert.equal(progress.unlockedCount, 1);
-  assert.equal(progress.totalCount, 6);
+  assert.equal(progress.totalCount, 12);
   assert.equal(progress.nextAchievement.id, "ten");
   assert.equal(progress.remaining, 5);
-  assert.equal(progress.summary, "已解锁 1/6");
+  assert.equal(progress.summary, "已解锁 1/12");
   assert.equal(progress.nextLine, "下一枚「十念清心」还差 5 点功德");
 });
 
 test("getAchievementProgress handles all achievements unlocked", () => {
   const progress = getAchievementProgress({
-    today: 50,
-    total: 600,
-    bestCombo: 35,
+    today: 120,
+    total: 1200,
+    bestCombo: 120,
+    streak: 40,
     date: "2026-05-23",
   });
 
-  assert.equal(progress.unlockedCount, 6);
-  assert.equal(progress.totalCount, 6);
+  assert.equal(progress.unlockedCount, 12);
+  assert.equal(progress.totalCount, 12);
   assert.equal(progress.nextAchievement, null);
   assert.equal(progress.remaining, 0);
   assert.equal(progress.nextLine, "成就已全部解锁，今天可以安心收工");

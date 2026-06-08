@@ -25,6 +25,7 @@ import {
   normalizeWish,
   saveWish,
 } from "../lib/gongde-growth";
+import { getStreakInfo, recordActiveDay } from "../lib/gongde-streak";
 import { renderWishCardToDataUrl } from "../lib/wish-card";
 import { AdsenseUnit } from "./adsense-unit";
 import { WoodenFish } from "./wooden-fish";
@@ -69,8 +70,16 @@ const defaultStats = {
   date: "",
 };
 
+const defaultStreak = {
+  current: 0,
+  longest: 0,
+  last7: [],
+  activeToday: false,
+};
+
 const statsEventName = "gongde-clicker:stats-updated";
 const wishEventName = "gongde-clicker:wish-updated";
+const streakEventName = "gongde-clicker:streak-updated";
 
 function subscribeToStats(onStoreChange) {
   if (typeof window === "undefined") {
@@ -122,6 +131,32 @@ function getWishSnapshot() {
 
 function emitWishChange() {
   window.dispatchEvent(new Event(wishEventName));
+}
+
+function subscribeToStreak(onStoreChange) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  window.addEventListener(streakEventName, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener(streakEventName, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function getStreakSnapshot() {
+  if (typeof window === "undefined") {
+    return JSON.stringify(defaultStreak);
+  }
+
+  return JSON.stringify(getStreakInfo(window.localStorage, getTodayKey()));
+}
+
+function emitStreakChange() {
+  window.dispatchEvent(new Event(streakEventName));
 }
 
 function shouldReportAnalytics() {
@@ -202,6 +237,13 @@ export function GongdeClicker() {
     ),
   );
   const activeWish = useSyncExternalStore(subscribeToWish, getWishSnapshot, () => "");
+  const streak = JSON.parse(
+    useSyncExternalStore(
+      subscribeToStreak,
+      getStreakSnapshot,
+      () => JSON.stringify(defaultStreak),
+    ),
+  );
 
   useEffect(() => {
     return () => {
@@ -230,10 +272,17 @@ export function GongdeClicker() {
   );
   const ritualPrompt = ritualPrompts[stats.today % ritualPrompts.length];
   const dailyFortune = useMemo(() => getDailyFortune(stats.date), [stats.date]);
-  const achievements = useMemo(() => getAchievements(stats), [stats]);
+  const statsWithStreak = useMemo(
+    () => ({ ...stats, streak: streak.current }),
+    [stats, streak.current],
+  );
+  const achievements = useMemo(
+    () => getAchievements(statsWithStreak),
+    [statsWithStreak],
+  );
   const achievementProgress = useMemo(
-    () => getAchievementProgress(stats),
-    [stats],
+    () => getAchievementProgress(statsWithStreak),
+    [statsWithStreak],
   );
 
   const showShareStatus = useCallback((message) => {
@@ -305,6 +354,8 @@ export function GongdeClicker() {
 
     floaterId.current = id;
     emitStatsChange();
+    recordActiveDay(window.localStorage, getTodayKey());
+    emitStreakChange();
     if (shouldReportAnalytics()) {
       track("gongde_click", {
         source,
@@ -392,6 +443,28 @@ export function GongdeClicker() {
           <span>最高连击</span>
           <strong>{stats.bestCombo}</strong>
         </div>
+      </section>
+
+      <section className="streak-bar" aria-label="连续打卡">
+        <div className="streak-headline">
+          <span className="streak-flame" aria-hidden="true">
+            🔥
+          </span>
+          <span className="streak-count">
+            连续修行 <strong>{streak.current}</strong> 天
+          </span>
+          <span className="streak-best">最长 {streak.longest} 天</span>
+        </div>
+        <ol className="streak-dots" aria-hidden="true">
+          {streak.last7.map((slot) => (
+            <li
+              key={slot.date}
+              className={`streak-dot ${slot.active ? "is-active" : ""} ${
+                slot.isToday ? "is-today" : ""
+              }`}
+            />
+          ))}
+        </ol>
       </section>
 
       <section className="play-area" aria-label="电子木鱼">
@@ -536,9 +609,14 @@ export function GongdeClicker() {
                 className={`badge-item ${item.unlocked ? "is-unlocked" : ""}`}
                 key={item.id}
               >
-                <span>{item.unlocked ? "已解锁" : "未解锁"}</span>
+                <span className="badge-icon" aria-hidden="true">
+                  {item.icon}
+                </span>
                 <strong>{item.name}</strong>
                 <small>{item.condition}</small>
+                <span className="badge-state">
+                  {item.unlocked ? "已解锁" : "未解锁"}
+                </span>
               </div>
             ))}
           </div>
