@@ -280,6 +280,41 @@ function emitStreakChange() {
   window.dispatchEvent(new Event(streakEventName));
 }
 
+const langEventName = "gongde-clicker:lang-updated";
+
+function subscribeToLang(onStoreChange) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  window.addEventListener(langEventName, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener(langEventName, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function getLangSnapshot() {
+  if (typeof window === "undefined") {
+    return DEFAULT_LANG;
+  }
+
+  return detectLanguage(
+    readStoredLanguage(window.localStorage),
+    window.navigator?.language,
+  );
+}
+
+function emitLangChange() {
+  window.dispatchEvent(new Event(langEventName));
+}
+
+// 客户端判定：SSR 与首帧 hydration 返回 false，挂载后返回 true，
+// 用于把"取本地默认愿望"推迟到客户端，避免服务端/客户端日期不一致导致的 hydration 不匹配。
+const noopSubscribe = () => () => {};
+
 function shouldReportAnalytics() {
   return process.env.NEXT_PUBLIC_DISABLE_ANALYTICS !== "1";
 }
@@ -337,8 +372,6 @@ function playWoodenFishSound(audioRef) {
 }
 
 export function GongdeClicker() {
-  const [lang, setLang] = useState(DEFAULT_LANG);
-  const [mounted, setMounted] = useState(false);
   const [combo, setCombo] = useState(0);
   const [hitState, setHitState] = useState(false);
   const [floaters, setFloaters] = useState([]);
@@ -352,39 +385,32 @@ export function GongdeClicker() {
   const progressTimer = useRef(null);
   const shareStatusTimer = useRef(null);
   const floaterId = useRef(0);
-  const stats = JSON.parse(
-    useSyncExternalStore(
-      subscribeToStats,
-      getStatsSnapshot,
-      () => JSON.stringify(defaultStats),
-    ),
+  const statsRaw = useSyncExternalStore(
+    subscribeToStats,
+    getStatsSnapshot,
+    () => JSON.stringify(defaultStats),
   );
+  const stats = useMemo(() => JSON.parse(statsRaw), [statsRaw]);
   const savedWish = useSyncExternalStore(subscribeToWish, getWishSnapshot, () => "");
-  const streak = JSON.parse(
-    useSyncExternalStore(
-      subscribeToStreak,
-      getStreakSnapshot,
-      () => JSON.stringify(defaultStreak),
-    ),
+  const streakRaw = useSyncExternalStore(
+    subscribeToStreak,
+    getStreakSnapshot,
+    () => JSON.stringify(defaultStreak),
   );
+  const streak = useMemo(() => JSON.parse(streakRaw), [streakRaw]);
+  const currentStreak = streak.current;
+  const lang = useSyncExternalStore(
+    subscribeToLang,
+    getLangSnapshot,
+    () => DEFAULT_LANG,
+  );
+  const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
 
   const t = ui[lang];
 
-  // 挂载后再读取语言偏好，保证 SSR 与首帧 hydration 都是默认中文，避免不匹配。
   useEffect(() => {
-    setMounted(true);
-    const detected = detectLanguage(
-      readStoredLanguage(window.localStorage),
-      window.navigator?.language,
-    );
-    setLang(detected);
-  }, []);
-
-  useEffect(() => {
-    if (mounted) {
-      document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
-    }
-  }, [lang, mounted]);
+    document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+  }, [lang]);
 
   useEffect(() => {
     return () => {
@@ -404,7 +430,7 @@ export function GongdeClicker() {
 
   // 已保存愿望优先；没有则按当前语言给默认愿望（挂载后才取默认，避免日期相关的 hydration 不匹配）。
   const activeWish =
-    savedWish || (mounted ? getDefaultWish(getTodayKey(), lang) : "");
+    savedWish || (isClient ? getDefaultWish(getTodayKey(), lang) : "");
 
   const gongdeLevel = useMemo(
     () => getGongdeLevel(stats.total, lang),
@@ -425,8 +451,8 @@ export function GongdeClicker() {
     [stats.date, lang],
   );
   const statsWithStreak = useMemo(
-    () => ({ ...stats, streak: streak.current }),
-    [stats, streak.current],
+    () => ({ ...stats, streak: currentStreak }),
+    [stats, currentStreak],
   );
   const achievements = useMemo(
     () => getAchievements(statsWithStreak, lang),
@@ -438,9 +464,8 @@ export function GongdeClicker() {
   );
 
   const changeLang = useCallback((next) => {
-    const normalized = normalizeLang(next);
-    setLang(normalized);
-    saveLanguage(window.localStorage, normalized);
+    saveLanguage(window.localStorage, normalizeLang(next));
+    emitLangChange();
   }, []);
 
   const showShareStatus = useCallback((message) => {
@@ -490,7 +515,7 @@ export function GongdeClicker() {
         dailyFortune,
         activeWish,
         document,
-        streak.current,
+        currentStreak,
       );
       const link = document.createElement("a");
 
@@ -503,7 +528,7 @@ export function GongdeClicker() {
     } catch {
       showShareStatus(t.msgSaveFail);
     }
-  }, [activeWish, dailyFortune, showShareStatus, stats, streak.current, t]);
+  }, [activeWish, currentStreak, dailyFortune, showShareStatus, stats, t]);
 
   const shareWish = useCallback(async () => {
     const text = getWishShareText(stats, dailyFortune, activeWish, lang);
@@ -518,7 +543,7 @@ export function GongdeClicker() {
           dailyFortune,
           activeWish,
           document,
-          streak.current,
+          currentStreak,
         );
         const blob = await (await fetch(dataUrl)).blob();
         const file = new File([blob], "gongde-wish-card.png", {
@@ -545,7 +570,7 @@ export function GongdeClicker() {
     }
 
     await copyShareText();
-  }, [activeWish, copyShareText, dailyFortune, lang, showShareStatus, stats, streak.current, t]);
+  }, [activeWish, copyShareText, currentStreak, dailyFortune, lang, showShareStatus, stats, t]);
 
   const strike = useCallback(
     (source = "click") => {
