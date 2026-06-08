@@ -233,18 +233,11 @@ button {
 
 .wooden-fish {
   position: relative;
-  width: clamp(220px, 38vw, 350px);
-  aspect-ratio: 1.22;
+  width: clamp(230px, 40vw, 360px);
+  display: block;
+  padding: 0;
   border: 0;
-  border-radius: 46% 52% 42% 48% / 45% 48% 52% 50%;
-  background:
-    radial-gradient(circle at 32% 31%, rgba(255, 217, 138, 0.58), transparent 15%),
-    radial-gradient(circle at 72% 42%, rgba(72, 36, 22, 0.36), transparent 8%),
-    linear-gradient(145deg, var(--wood-light), var(--wood) 46%, var(--wood-dark));
-  box-shadow:
-    inset 0 -22px 42px rgba(41, 19, 10, 0.28),
-    inset 0 18px 38px rgba(255, 214, 145, 0.32),
-    var(--shadow);
+  background: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   cursor: pointer;
@@ -252,29 +245,19 @@ button {
   user-select: none;
   transition:
     transform 120ms ease,
-    filter 120ms ease,
-    box-shadow 120ms ease;
-}
-
-.wooden-fish::before {
-  content: "";
-  position: absolute;
-  width: 38%;
-  height: 20%;
-  left: 31%;
-  bottom: -8%;
-  border-radius: 50%;
-  background: rgba(63, 34, 22, 0.18);
-  filter: blur(10px);
-  z-index: -1;
+    filter 120ms ease;
 }
 
 .wooden-fish::after {
   content: "";
   position: absolute;
-  inset: -12px;
+  left: 50%;
+  top: 46%;
+  width: 80%;
+  height: 80%;
+  transform: translate(-50%, -50%);
   border: 2px solid rgba(224, 164, 37, 0);
-  border-radius: inherit;
+  border-radius: 50%;
   opacity: 0;
   pointer-events: none;
 }
@@ -284,55 +267,152 @@ button {
 }
 
 .wooden-fish:hover {
-  filter: saturate(1.05);
+  filter: saturate(1.05) drop-shadow(0 14px 24px rgba(120, 40, 28, 0.16));
   transform: translateY(-2px);
+}
+
+.wooden-fish:active {
+  transform: translateY(1px) scale(0.99);
 }
 
 .wooden-fish.is-hit {
   animation: fish-hit 220ms cubic-bezier(0.2, 0.8, 0.25, 1.18);
-  box-shadow:
-    0 0 0 12px rgba(224, 164, 37, 0.11),
-    inset 0 -22px 42px rgba(41, 19, 10, 0.28),
-    inset 0 18px 44px rgba(255, 214, 145, 0.38),
-    0 24px 58px rgba(162, 58, 74, 0.22);
 }
 
 .wooden-fish.is-hit::after {
   animation: fish-pulse 420ms ease-out;
 }
 
-.fish-top,
-.fish-mouth,
-.fish-core {
+.muyu-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 16px 26px rgba(80, 28, 16, 0.22));
+}
+
+.muyu-mallet {
+  transform-box: fill-box;
+  transform-origin: 86% 6%;
+}
+
+.wooden-fish.is-hit .muyu-mallet {
+  animation: mallet-strike 240ms cubic-bezier(0.3, 0.7, 0.3, 1.2);
+}
+
+.muyu-body {
+  transform-box: fill-box;
+  transform-origin: center 80%;
+}
+
+.wooden-fish.is-hit .muyu-body {
+  animation: muyu-squash 220ms cubic-bezier(0.2, 0.8, 0.25, 1.18);
+}
+
+.merit-layer {
   position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 0;
+  height: 0;
   pointer-events: none;
+  z-index: 4;
 }
 
-.fish-top {
-  width: 52%;
-  height: 18%;
-  left: 24%;
-  top: 10%;
-  border-radius: 50%;
-  border-top: 7px solid rgba(85, 40, 24, 0.34);
+.merit-pop {
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 
-.fish-mouth {
-  width: 44%;
-  height: 18%;
-  left: 28%;
-  bottom: 27%;
-  border-radius: 0 0 999px 999px;
-  background: rgba(45, 23, 17, 0.34);
-  box-shadow: inset 0 8px 13px rgba(18, 8, 4, 0.22);
-}
-
-.fish-core {
-  inset: auto 0 47%;
-  color: rgba(255, 247, 226, 0.92);
-  font-size: clamp(28px, 9vw, 56px);
+.merit-pop-value {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  font-size: clamp(26px, 6vw, 40px);
   font-weight: 900;
-  text-shadow: 0 2px 8px rgba(44, 23, 15, 0.35);
+  color: #f4b740;
+  text-shadow:
+    0 2px 0 #b9791a,
+    0 6px 16px rgba(180, 110, 20, 0.4);
+  animation: merit-rise 760ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.merit-spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fff1c4,
+    #f4b740 60%,
+    rgba(244, 183, 64, 0)
+  );
+  animation: spark-fly 560ms ease-out forwards;
+}
+
+@keyframes mallet-strike {
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-26deg);
+  }
+  62% {
+    transform: rotate(11deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes muyu-squash {
+  0% {
+    transform: scale(1, 1);
+  }
+  32% {
+    transform: scale(1.04, 0.93);
+  }
+  70% {
+    transform: scale(0.99, 1.02);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes merit-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -30%) scale(0.6);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -54%) scale(1.12);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -150%) scale(1);
+  }
+}
+
+@keyframes spark-fly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--sx, 0), var(--sy, 0)) scale(0.5);
+  }
 }
 
 .combo-line {
@@ -969,11 +1049,7 @@ button {
   }
 
   .wooden-fish {
-    width: min(72vw, 300px);
-  }
-
-  .fish-mouth {
-    height: 16%;
+    width: min(74vw, 320px);
   }
 
   .floater {

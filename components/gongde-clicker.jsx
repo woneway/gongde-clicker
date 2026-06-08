@@ -27,6 +27,17 @@ import {
 } from "../lib/gongde-growth";
 import { renderWishCardToDataUrl } from "../lib/wish-card";
 import { AdsenseUnit } from "./adsense-unit";
+import { WoodenFish } from "./wooden-fish";
+
+// 敲击火花的迸射方向（六向），由 CSS 用 --sx/--sy 驱动飞出。
+const sparkVectors = [
+  { x: 0, y: -36 },
+  { x: 32, y: -18 },
+  { x: 32, y: 18 },
+  { x: 0, y: 36 },
+  { x: -32, y: 18 },
+  { x: -32, y: -18 },
+];
 
 const phrases = [
   "老板少骂我一次",
@@ -173,10 +184,12 @@ export function GongdeClicker() {
   const [combo, setCombo] = useState(0);
   const [hitState, setHitState] = useState(false);
   const [floaters, setFloaters] = useState([]);
+  const [pops, setPops] = useState([]);
   const [progressPulse, setProgressPulse] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [manualShareText, setManualShareText] = useState("");
   const audioRef = useRef(null);
+  const comboRef = useRef(0);
   const comboTimer = useRef(null);
   const progressTimer = useRef(null);
   const shareStatusTimer = useRef(null);
@@ -280,7 +293,8 @@ export function GongdeClicker() {
   }, [activeWish, dailyFortune, showShareStatus, stats]);
 
   const strike = useCallback((source = "click") => {
-    const nextCombo = combo + 1;
+    comboRef.current += 1;
+    const nextCombo = comboRef.current;
     const nextStats = addMerit(window.localStorage, getTodayKey(), nextCombo);
     const nextLevel = getGongdeLevel(nextStats.total);
     const phrase =
@@ -311,6 +325,7 @@ export function GongdeClicker() {
         drift: Math.random() > 0.5 ? "left" : "right",
       },
     ]);
+    setPops((items) => [...items.slice(-4), { id }]);
 
     playWoodenFishSound(audioRef);
 
@@ -326,12 +341,18 @@ export function GongdeClicker() {
     window.setTimeout(() => {
       setFloaters((items) => items.filter((item) => item.id !== id));
     }, 1100);
+    window.setTimeout(() => {
+      setPops((items) => items.filter((item) => item.id !== id));
+    }, 780);
 
     if (comboTimer.current) {
       window.clearTimeout(comboTimer.current);
     }
-    comboTimer.current = window.setTimeout(() => setCombo(0), 1400);
-  }, [activeWish, combo]);
+    comboTimer.current = window.setTimeout(() => {
+      comboRef.current = 0;
+      setCombo(0);
+    }, 1400);
+  }, [activeWish]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -395,9 +416,21 @@ export function GongdeClicker() {
           type="button"
           aria-label="敲木鱼，功德加一"
         >
-          <span className="fish-top" />
-          <span className="fish-mouth" />
-          <span className="fish-core">木鱼</span>
+          <WoodenFish isHit={hitState} />
+          <span className="merit-layer" aria-hidden="true">
+            {pops.map((pop) => (
+              <span className="merit-pop" key={pop.id}>
+                <span className="merit-pop-value">+1</span>
+                {sparkVectors.map((vector, index) => (
+                  <span
+                    className="merit-spark"
+                    key={index}
+                    style={{ "--sx": `${vector.x}px`, "--sy": `${vector.y}px` }}
+                  />
+                ))}
+              </span>
+            ))}
+          </span>
         </button>
         <div
           className={`combo-line ${combo >= 3 ? "is-combo-hot" : ""}`}

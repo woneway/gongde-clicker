@@ -1,5 +1,6 @@
 import "./globals.css";
 import Link from "next/link";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
@@ -81,16 +82,6 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify(breadcrumbJsonLd),
           }}
         />
-        <script
-          async
-          crossOrigin="anonymous"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1739691894917552"
-        />
-        <script
-          defer
-          src="https://static.cloudflareinsights.com/beacon.min.js"
-          data-cf-beacon='{"token": "2ca047e8f5da4980b15b6fc1cc988554"}'
-        />
       </head>
       <body>
         <header className="site-header">
@@ -126,6 +117,18 @@ export default function RootLayout({ children }) {
         process.env.NEXT_PUBLIC_DISABLE_ANALYTICS !== "1" ? (
           <Analytics />
         ) : null}
+        <Script
+          id="adsbygoogle-init"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1739691894917552"
+        />
+        <Script
+          id="cloudflare-insights"
+          strategy="afterInteractive"
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "2ca047e8f5da4980b15b6fc1cc988554"}'
+        />
       </body>
     </html>
   );
