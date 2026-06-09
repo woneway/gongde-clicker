@@ -136,6 +136,10 @@ const ui = {
     allDoneHint: "可以继续敲一张更好看的分享图",
     badgeUnlocked: "已解锁",
     badgeLocked: "未解锁",
+    navIntro: "介绍",
+    navFortune: "功德签",
+    navBadges: "成就",
+    sheetClose: "收起",
     msgCopied: "已复制分享文案",
     msgCopyFail: "复制失败，请手动复制文案",
     msgRotated: "已换一个愿望",
@@ -175,6 +179,10 @@ const ui = {
     allDoneHint: "Keep tapping for a nicer share card",
     badgeUnlocked: "Unlocked",
     badgeLocked: "Locked",
+    navIntro: "About",
+    navFortune: "Fortune",
+    navBadges: "Badges",
+    sheetClose: "Close",
     msgCopied: "Copied share text",
     msgCopyFail: "Copy failed — please copy manually",
     msgRotated: "Shuffled a new wish",
@@ -379,6 +387,7 @@ export function GongdeClicker() {
   const [progressPulse, setProgressPulse] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [manualShareText, setManualShareText] = useState("");
+  const [activeSheet, setActiveSheet] = useState(null);
   const audioRef = useRef(null);
   const comboRef = useRef(0);
   const comboTimer = useRef(null);
@@ -467,6 +476,12 @@ export function GongdeClicker() {
     saveLanguage(window.localStorage, normalizeLang(next));
     emitLangChange();
   }, []);
+
+  // 移动端：点击底部入口展开对应抽屉，再次点击或点遮罩关闭。
+  const toggleSheet = useCallback((panel) => {
+    setActiveSheet((current) => (current === panel ? null : panel));
+  }, []);
+  const closeSheet = useCallback(() => setActiveSheet(null), []);
 
   const showShareStatus = useCallback((message) => {
     if (shareStatusTimer.current) {
@@ -781,14 +796,50 @@ export function GongdeClicker() {
         </div>
       </section>
 
-      <section className="seo-summary" aria-labelledby="seo-summary-title">
-        <p className="section-kicker">{t.seoKicker}</p>
-        <h1 id="seo-summary-title">{t.seoTitle}</h1>
-        <p>{t.seoBody}</p>
-      </section>
+      <nav className="sheet-nav" aria-label="详情入口">
+        {[
+          { key: "intro", label: t.navIntro },
+          { key: "fortune", label: t.navFortune },
+          { key: "badges", label: t.navBadges },
+        ].map((item) => (
+          <button
+            className={`sheet-chip ${activeSheet === item.key ? "is-active" : ""}`}
+            key={item.key}
+            type="button"
+            aria-expanded={activeSheet === item.key}
+            onClick={() => toggleSheet(item.key)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
 
-      <section className="growth-panel" aria-label="每日功德签和成就">
-        <article className="fortune-card">
+      <button
+        className={`sheet-backdrop ${activeSheet ? "is-open" : ""}`}
+        type="button"
+        aria-label={t.sheetClose}
+        onClick={closeSheet}
+      />
+
+      <div className="detail-region" data-active={activeSheet || ""}>
+        <section
+          className="seo-summary"
+          data-panel="intro"
+          aria-labelledby="seo-summary-title"
+        >
+          <button className="sheet-handle" type="button" onClick={closeSheet}>
+            {t.sheetClose}
+          </button>
+          <p className="section-kicker">{t.seoKicker}</p>
+          <h1 id="seo-summary-title">{t.seoTitle}</h1>
+          <p>{t.seoBody}</p>
+        </section>
+
+        <section className="growth-panel" aria-label="每日功德签和成就">
+          <article className="fortune-card" data-panel="fortune">
+            <button className="sheet-handle" type="button" onClick={closeSheet}>
+              {t.sheetClose}
+            </button>
           <span className="section-kicker">{t.fortuneKicker}</span>
           <h2>{dailyFortune.title}</h2>
           <p>{dailyFortune.text}</p>
@@ -843,7 +894,10 @@ export function GongdeClicker() {
           )}
         </article>
 
-        <article className="achievement-card">
+        <article className="achievement-card" data-panel="badges">
+          <button className="sheet-handle" type="button" onClick={closeSheet}>
+            {t.sheetClose}
+          </button>
           <div className="achievement-heading">
             <span className="section-kicker">{t.achievementsKicker}</span>
             <strong>{achievementProgress.summary}</strong>
@@ -874,7 +928,8 @@ export function GongdeClicker() {
             ))}
           </div>
         </article>
-      </section>
+        </section>
+      </div>
 
       <AdsenseUnit slot="5762213705" />
     </main>
