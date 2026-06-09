@@ -697,6 +697,7 @@ export function GongdeClicker() {
         ))}
       </div>
 
+      <div className="stage">
       <section className="score-strip" aria-label="功德统计">
         <div>
           <span>{t.statToday}</span>
@@ -813,6 +814,7 @@ export function GongdeClicker() {
           </button>
         ))}
       </nav>
+      </div>
 
       <button
         className={`sheet-backdrop ${activeSheet ? "is-open" : ""}`}
