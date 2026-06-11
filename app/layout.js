@@ -93,6 +93,11 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify(breadcrumbJsonLd),
           }}
         />
+        <script
+          async
+          crossOrigin="anonymous"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1739691894917552"
+        />
       </head>
       <body>
         <header className="site-header">
@@ -128,12 +133,6 @@ export default function RootLayout({ children }) {
         process.env.NEXT_PUBLIC_DISABLE_ANALYTICS !== "1" ? (
           <Analytics />
         ) : null}
-        <Script
-          id="adsbygoogle-init"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1739691894917552"
-        />
         <Script
           id="cloudflare-insights"
           strategy="afterInteractive"

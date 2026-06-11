@@ -53,6 +53,17 @@ test("root layout includes the AdSense publisher verification script", () => {
   assert.match(layout, /client=ca-pub-1739691894917552/);
 });
 
+test("root layout places the AdSense verification script in head", () => {
+  const headCloseIndex = layout.indexOf("</head>");
+  const adScriptIndex = layout.indexOf(
+    "pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
+  );
+
+  assert.notEqual(headCloseIndex, -1);
+  assert.notEqual(adScriptIndex, -1);
+  assert.ok(adScriptIndex < headCloseIndex);
+});
+
 test("home page exposes search-friendly copy for core queries", () => {
   assert.match(clicker, /seo-summary/);
   assert.match(clicker, /在线电子木鱼/);
