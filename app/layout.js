@@ -110,6 +110,7 @@ export default function RootLayout({ children }) {
           </Link>
           <nav className="site-nav" aria-label="主导航">
             <Link href="/how-it-works">玩法</Link>
+            <Link href="/blog">文章</Link>
             <Link href="/faq">FAQ</Link>
             <Link href="/about">关于</Link>
             <Link href="/privacy">隐私</Link>
@@ -123,6 +124,8 @@ export default function RootLayout({ children }) {
           </p>
           <p>
             <Link href="/">gongdeclicker.com</Link>
+            <span aria-hidden="true"> · </span>
+            <Link href="/blog">文章</Link>
             <span aria-hidden="true"> · </span>
             <Link href="/about">关于赛博木鱼</Link>
             <span aria-hidden="true"> · </span>
